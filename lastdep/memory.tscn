@@ -1,0 +1,40 @@
+[gd_scene load_steps=4 format=3 uid="uid://cc2rngk7k7f8b"]
+
+[ext_resource type="Texture2D" uid="uid://dp1ejmaspdjaf" path="res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Farm Animals/Male Cow Brown.png" id="1_fx0hl"]
+[ext_resource type="Script" uid="uid://cqutaldh66s5p" path="res://memory.gd" id="1_ig7tw"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_fx0hl"]
+
+[node name="Main" type="Node2D"]
+
+[node name="TextureRect" type="TextureRect" parent="."]
+offset_left = -3.0
+offset_top = -5.0
+offset_right = 1155.0
+offset_bottom = 652.0
+texture = ExtResource("1_fx0hl")
+
+[node name="GridContainer" type="GridContainer" parent="."]
+offset_left = 252.0
+offset_top = 118.0
+offset_right = 902.0
+offset_bottom = 618.0
+columns = 7
+script = ExtResource("1_ig7tw")
+
+[node name="Score" type="Label" parent="."]
+offset_left = 37.0
+offset_top = 34.0
+offset_right = 105.0
+offset_bottom = 68.0
+text = "Счёт: 0"
+
+[node name="Label" type="Label" parent="."]
+offset_left = 509.0
+offset_top = 34.0
+offset_right = 637.0
+offset_bottom = 57.0
+text = "Игра на память"
+label_settings = SubResource("LabelSettings_fx0hl")
+horizontal_alignment = 1
+vertical_alignment = 1

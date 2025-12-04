@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="LastDep"
-run/main_scene="uid://bbiad1c0ejv4a"
+run/main_scene="uid://bgbojrqv8q2jn"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 

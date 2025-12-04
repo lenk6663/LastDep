@@ -1,0 +1,22 @@
+[gd_scene load_steps=2 format=3 uid="uid://bgbojrqv8q2jn"]
+
+[ext_resource type="Script" uid="uid://cxhh38txy3tl4" path="res://battleship.gd" id="1_kygsx"]
+
+[node name="Battleship" type="Node2D"]
+
+[node name="EnemyGrid" type="GridContainer" parent="."]
+offset_bottom = 40.0
+columns = 10
+script = ExtResource("1_kygsx")
+
+[node name="PlayerGrid" type="GridContainer" parent="."]
+offset_left = 4.0
+offset_right = 4.0
+offset_bottom = 40.0
+columns = 10
+
+[node name="Label" type="Label" parent="."]
+offset_left = 4.0
+offset_right = 111.0
+offset_bottom = 23.0
+text = "Морской бой"
