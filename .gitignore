@@ -1,0 +1,11 @@
+# Godot 4
+.import/
+.export/
+*.import
+*.godot/
+.editor/
+*.tmp
+*.log
+*.swap
+*.cfg
+*.res
