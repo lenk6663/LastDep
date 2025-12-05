@@ -1,5 +1,7 @@
+Button
+Label
+VBoxContainer
 Control
 HBoxContainer
-Label
 GridContainer
 TextureRect
