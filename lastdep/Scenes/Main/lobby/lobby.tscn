@@ -1,0 +1,40 @@
+[gd_scene load_steps=2 format=3 uid="uid://blyyvf7ag18aa"]
+
+[ext_resource type="Script" uid="uid://cxu7m6ghw6d2o" path="res://Scenes/Main/lobby/lobby.gd" id="1_6ev6a"]
+
+[node name="Lobby" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 490.0
+offset_top = 174.0
+offset_right = 490.0
+offset_bottom = 174.0
+script = ExtResource("1_6ev6a")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "ЛОББИ"
+
+[node name="StatusLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Ожидание..."
+
+[node name="IPLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "IP: "
+
+[node name="CancelButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Отмена"
+
+[node name="StartButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "В меню"

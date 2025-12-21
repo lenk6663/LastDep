@@ -1,0 +1,58 @@
+[gd_scene load_steps=3 format=3 uid="uid://cc2rngk7k7f8b"]
+
+[ext_resource type="Script" uid="uid://bcdf4j8cgu4nc" path="res://Scenes/Minigames/Memory/memory.gd" id="1_mhtmj"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_fx0hl"]
+
+[node name="Memory" type="Node2D"]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="GridContainer" type="GridContainer" parent="CanvasLayer"]
+offset_left = 254.0
+offset_top = 77.0
+offset_right = 904.0
+offset_bottom = 577.0
+columns = 7
+script = ExtResource("1_mhtmj")
+
+[node name="Camera2D" type="Camera2D" parent="CanvasLayer/GridContainer"]
+position = Vector2(321, 249)
+
+[node name="CurrentPlayerLabel" type="Label" parent="CanvasLayer"]
+offset_left = 977.0
+offset_top = 18.0
+offset_right = 1105.0
+offset_bottom = 41.0
+label_settings = SubResource("LabelSettings_fx0hl")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Player1Score" type="Label" parent="CanvasLayer"]
+offset_left = 72.0
+offset_top = 103.0
+offset_right = 143.0
+offset_bottom = 126.0
+
+[node name="Player2Score" type="Label" parent="CanvasLayer"]
+offset_left = 55.0
+offset_top = 144.0
+offset_right = 165.0
+offset_bottom = 167.0
+
+[node name="TimerLabel" type="Label" parent="CanvasLayer"]
+offset_left = 43.0
+offset_top = 14.0
+offset_right = 111.0
+offset_bottom = 48.0
+
+[node name="GameStatusLabel" type="Label" parent="CanvasLayer"]
+offset_left = 470.0
+offset_top = 12.0
+offset_right = 510.0
+offset_bottom = 35.0
+
+[node name="GameTimer" type="Timer" parent="CanvasLayer"]
+one_shot = true
+
+[connection signal="timeout" from="CanvasLayer/GameTimer" to="CanvasLayer/GridContainer" method="_on_game_timer_timeout"]
