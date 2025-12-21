@@ -1,0 +1,182 @@
+[gd_scene load_steps=2 format=3 uid="uid://bgbojrqv8q2jn"]
+
+[ext_resource type="Script" uid="uid://cjtlyn7lfeoo" path="res://Scenes/Minigames/Battleship/battleship.gd" id="1_kygsx"]
+
+[node name="Battleship" type="Node2D"]
+position = Vector2(2, 2)
+script = ExtResource("1_kygsx")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="MainUI" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/MainUI"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 23.0
+grow_horizontal = 2
+text = "МОРСКОЙ БОЙ"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TimerLabel" type="Label" parent="CanvasLayer/MainUI"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.06
+anchor_right = 0.5
+anchor_bottom = 0.06
+offset_left = 1.0
+offset_right = 1.0
+grow_horizontal = 2
+text = "Время: 05:00"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="Player1Info" type="HBoxContainer" parent="CanvasLayer/MainUI"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.05
+anchor_top = 0.12
+anchor_right = 0.25
+anchor_bottom = 0.15
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 50
+
+[node name="Player1Label" type="Label" parent="CanvasLayer/MainUI/Player1Info"]
+layout_mode = 2
+
+[node name="Player1ScoreLabel" type="Label" parent="CanvasLayer/MainUI/Player1Info"]
+layout_mode = 2
+
+[node name="Player2Info" type="HBoxContainer" parent="CanvasLayer/MainUI"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.75
+anchor_top = 0.12
+anchor_right = 0.95
+anchor_bottom = 0.15
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Player2Label" type="Label" parent="CanvasLayer/MainUI/Player2Info"]
+layout_mode = 2
+
+[node name="Player2ScoreLabel" type="Label" parent="CanvasLayer/MainUI/Player2Info"]
+layout_mode = 2
+
+[node name="GameArea" type="HBoxContainer" parent="CanvasLayer/MainUI"]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.17
+anchor_right = 1.0
+anchor_bottom = 0.55
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_constants/separation = 50
+
+[node name="PlayerSection" type="VBoxContainer" parent="CanvasLayer/MainUI/GameArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PlayerGrid" type="GridContainer" parent="CanvasLayer/MainUI/GameArea/PlayerSection"]
+custom_minimum_size = Vector2(400, 400)
+layout_mode = 2
+columns = 10
+
+[node name="EnemySection" type="VBoxContainer" parent="CanvasLayer/MainUI/GameArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="EnemyGrid" type="GridContainer" parent="CanvasLayer/MainUI/GameArea/EnemySection"]
+layout_mode = 2
+columns = 10
+
+[node name="MyShipsContainer" type="VBoxContainer" parent="CanvasLayer/MainUI"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.05
+anchor_top = 0.6
+anchor_right = 0.45
+anchor_bottom = 0.75
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ShipsContainer" type="VBoxContainer" parent="CanvasLayer/MainUI/MyShipsContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="EnemyShipsContainer" type="VBoxContainer" parent="CanvasLayer/MainUI"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.6
+anchor_right = 0.95
+anchor_bottom = 0.75
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="EnemyShipsGrid" type="GridContainer" parent="CanvasLayer/MainUI/EnemyShipsContainer"]
+custom_minimum_size = Vector2(400, 100)
+layout_mode = 2
+size_flags_vertical = 3
+columns = 10
+
+[node name="ControlButtons" type="HBoxContainer" parent="CanvasLayer/MainUI"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.3
+anchor_top = 0.8
+anchor_right = 0.7
+anchor_bottom = 0.85
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="RotateButton" type="Button" parent="CanvasLayer/MainUI/ControlButtons"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="RandomButton" type="Button" parent="CanvasLayer/MainUI/ControlButtons"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="ReadyButton" type="Button" parent="CanvasLayer/MainUI/ControlButtons"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer/MainUI"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.1
+anchor_top = 0.9
+anchor_right = 0.9
+anchor_bottom = 0.95
+offset_right = 40.0
+offset_bottom = 23.0
+text = "Расставьте ваши корабли"
+horizontal_alignment = 1
+vertical_alignment = 1

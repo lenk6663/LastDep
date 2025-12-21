@@ -1,0 +1,151 @@
+[gd_scene load_steps=2 format=3 uid="uid://bgbojrqv8q2jn"]
+
+[ext_resource type="Script" uid="uid://cjtlyn7lfeoo" path="res://Scenes/Minigames/Battleship/battleship.gd" id="1_kygsx"]
+
+[node name="Battleship" type="Node2D"]
+position = Vector2(2, 2)
+script = ExtResource("1_kygsx")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="MainUI" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VerticalBox" type="VBoxContainer" parent="CanvasLayer/MainUI"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="TopBar" type="HBoxContainer" parent="CanvasLayer/MainUI/VerticalBox"]
+layout_mode = 2
+
+[node name="Player1Info" type="VBoxContainer" parent="CanvasLayer/MainUI/VerticalBox/TopBar"]
+layout_mode = 2
+
+[node name="Player1Label" type="Label" parent="CanvasLayer/MainUI/VerticalBox/TopBar/Player1Info"]
+layout_mode = 2
+
+[node name="Player1ScoreLabel" type="Label" parent="CanvasLayer/MainUI/VerticalBox/TopBar/Player1Info"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="CanvasLayer/MainUI/VerticalBox/TopBar"]
+layout_mode = 2
+
+[node name="GameTitle" type="VBoxContainer" parent="CanvasLayer/MainUI/VerticalBox/TopBar"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/MainUI/VerticalBox/TopBar/GameTitle"]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer/MainUI/VerticalBox/TopBar/GameTitle"]
+layout_mode = 2
+
+[node name="Spacer2" type="Control" parent="CanvasLayer/MainUI/VerticalBox/TopBar"]
+layout_mode = 2
+
+[node name="Player2Info" type="VBoxContainer" parent="CanvasLayer/MainUI/VerticalBox/TopBar/Spacer2"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Player2Label" type="Label" parent="CanvasLayer/MainUI/VerticalBox/TopBar/Spacer2/Player2Info"]
+layout_mode = 2
+
+[node name="Player2ScoreLabel" type="Label" parent="CanvasLayer/MainUI/VerticalBox/TopBar/Spacer2/Player2Info"]
+layout_mode = 2
+
+[node name="TimerBar" type="HBoxContainer" parent="CanvasLayer/MainUI/VerticalBox"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="CanvasLayer/MainUI/VerticalBox/TimerBar"]
+layout_mode = 2
+
+[node name="TimerLabel" type="Label" parent="CanvasLayer/MainUI/VerticalBox/TimerBar"]
+layout_mode = 2
+
+[node name="Spacer2" type="Control" parent="CanvasLayer/MainUI/VerticalBox/TimerBar"]
+layout_mode = 2
+
+[node name="GameArea" type="HBoxContainer" parent="CanvasLayer/MainUI/VerticalBox"]
+layout_mode = 2
+
+[node name="LeftPanel" type="VBoxContainer" parent="CanvasLayer/MainUI/VerticalBox/GameArea"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer/MainUI/VerticalBox/GameArea/LeftPanel"]
+layout_mode = 2
+text = "Ваши корабли:"
+
+[node name="ShipsContainer" type="VBoxContainer" parent="CanvasLayer/MainUI/VerticalBox/GameArea/LeftPanel"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="CanvasLayer/MainUI/VerticalBox/GameArea/LeftPanel"]
+layout_mode = 2
+
+[node name="ButtonContainer" type="VBoxContainer" parent="CanvasLayer/MainUI/VerticalBox/GameArea/LeftPanel"]
+layout_mode = 2
+
+[node name="RotateButton" type="Button" parent="CanvasLayer/MainUI/VerticalBox/GameArea/LeftPanel/ButtonContainer"]
+layout_mode = 2
+
+[node name="RandomButton" type="Button" parent="CanvasLayer/MainUI/VerticalBox/GameArea/LeftPanel/ButtonContainer"]
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="CanvasLayer/MainUI/VerticalBox/GameArea/LeftPanel/ButtonContainer"]
+layout_mode = 2
+
+[node name="CenterPanels" type="VBoxContainer" parent="CanvasLayer/MainUI/VerticalBox/GameArea"]
+layout_mode = 2
+
+[node name="PlayerBoardSection" type="VBoxContainer" parent="CanvasLayer/MainUI/VerticalBox/GameArea/CenterPanels"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer/MainUI/VerticalBox/GameArea/CenterPanels/PlayerBoardSection"]
+layout_mode = 2
+text = "Ваша доска"
+
+[node name="PlayerGrid" type="GridContainer" parent="CanvasLayer/MainUI/VerticalBox/GameArea/CenterPanels/PlayerBoardSection"]
+layout_mode = 2
+
+[node name="EnemyBoardSection" type="VBoxContainer" parent="CanvasLayer/MainUI/VerticalBox/GameArea/CenterPanels"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer/MainUI/VerticalBox/GameArea/CenterPanels/EnemyBoardSection"]
+layout_mode = 2
+text = "Доска противника"
+
+[node name="EnemyGrid" type="GridContainer" parent="CanvasLayer/MainUI/VerticalBox/GameArea/CenterPanels/EnemyBoardSection"]
+layout_mode = 2
+
+[node name="RightPanel" type="VBoxContainer" parent="CanvasLayer/MainUI/VerticalBox/GameArea"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer/MainUI/VerticalBox/GameArea/RightPanel"]
+layout_mode = 2
+text = "Инструкция:"
+
+[node name="Instructions" type="RichTextLabel" parent="CanvasLayer/MainUI/VerticalBox/GameArea/RightPanel"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="CanvasLayer/MainUI/VerticalBox/GameArea/RightPanel"]
+layout_mode = 2
+
+[node name="ReadyButton" type="Button" parent="CanvasLayer/MainUI/VerticalBox/GameArea/RightPanel"]
+layout_mode = 2
+
+[node name="BottomBar" type="HBoxContainer" parent="CanvasLayer/MainUI/VerticalBox"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="CanvasLayer/MainUI/VerticalBox/BottomBar"]
+layout_mode = 2
+
+[node name="TurnIndicator" type="Label" parent="CanvasLayer/MainUI/VerticalBox/BottomBar"]
+layout_mode = 2
+
+[node name="Spacer2" type="Control" parent="CanvasLayer/MainUI/VerticalBox/BottomBar"]
+layout_mode = 2
