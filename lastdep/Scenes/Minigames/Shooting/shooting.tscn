@@ -1,3 +1,76 @@
-[gd_scene format=3 uid="uid://dqsyik8lmn8jp"]
+[gd_scene load_steps=2 format=3 uid="uid://dqsyik8lmn8jp"]
+
+[ext_resource type="Script" uid="uid://drw25ece34f5" path="res://Scenes/Minigames/Shooting/Shooting.gd" id="1_jhxbx"]
 
 [node name="Shooting" type="Node2D"]
+script = ExtResource("1_jhxbx")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="TimerLabel" type="Label" parent="CanvasLayer"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 23.0
+grow_horizontal = 2
+size_flags_vertical = 0
+text = "Время: 01:00"
+horizontal_alignment = 1
+
+[node name="Player1ScoreLabel" type="Label" parent="CanvasLayer"]
+offset_right = 40.0
+offset_bottom = 23.0
+text = "Игрок 1: 0"
+
+[node name="Player2ScoreLabel" type="Label" parent="CanvasLayer"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -40.0
+offset_bottom = 23.0
+grow_horizontal = 0
+text = "Игрок 2: 0"
+
+[node name="WinnerLabel" type="Label" parent="CanvasLayer"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -11.5
+offset_right = 20.0
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GameArea" type="Node2D" parent="."]
+
+[node name="Background" type="ColorRect" parent="GameArea"]
+custom_minimum_size = Vector2(1150, 650)
+offset_right = 1150.0
+offset_bottom = 650.0
+color = Color(0.23031491, 0.23031494, 0.23031488, 1)
+
+[node name="Tracks" type="Node2D" parent="GameArea"]
+
+[node name="LeftTrack" type="Sprite2D" parent="GameArea/Tracks"]
+
+[node name="RightTrack" type="Sprite2D" parent="GameArea/Tracks"]
+
+[node name="Players" type="Node2D" parent="GameArea"]
+
+[node name="Player1Cart" type="Area2D" parent="GameArea/Players"]
+
+[node name="Player2Cart" type="Area2D" parent="GameArea/Players"]
+
+[node name="TargetsContainer" type="Node2D" parent="GameArea"]
+
+[node name="GameTimer" type="Timer" parent="."]
+
+[node name="SpawnTimer" type="Timer" parent="."]

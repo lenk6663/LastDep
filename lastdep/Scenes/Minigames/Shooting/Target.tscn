@@ -1,0 +1,33 @@
+[gd_scene load_steps=4 format=3 uid="uid://2wxsh1pw4s2a"]
+
+[ext_resource type="Script" uid="uid://bdbasjtawt7dg" path="res://Scenes/Minigames/Shooting/Target.gd" id="1_f7pbv"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_f7pbv"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_4l6ba"]
+
+[node name="Target" type="Area2D"]
+script = ExtResource("1_f7pbv")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+position = Vector2(1.25, 1)
+scale = Vector2(3.5, -1)
+texture = SubResource("CanvasTexture_f7pbv")
+
+[node name="ColorRect" type="ColorRect" parent="Sprite"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -3.2142859
+offset_top = -9.125
+offset_right = 2.2142859
+offset_bottom = 8.125
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.83696365, 0.047866784, 0, 1)
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+position = Vector2(0, 2)
+shape = SubResource("CircleShape2D_4l6ba")

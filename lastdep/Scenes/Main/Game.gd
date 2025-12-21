@@ -192,7 +192,7 @@ func start_battleship_minigame():
 		player.set_physics_process(false)
 	
 	# 3. Загружаем мини-игру
-	var battleship_scene = preload("res://Scenes/MiniGames/Battleship/Battleship.tscn")
+	var battleship_scene = preload("res://Scenes/Minigames/Battleship/Battleship.tscn")
 	if not battleship_scene:
 		print("ОШИБКА: Не могу загрузить сцену Battleship!")
 		return
@@ -242,3 +242,73 @@ func _on_battleship_game_over():
 		player.visible = true
 	
 	print("ВОЗВРАТ В ОСНОВНУЮ ИГРУ ЗАВЕРШЕН")
+	
+func start_shooting_minigame():
+	print("=")
+	print("GAME.GD: ЗАПУСК СТРЕЛЬБЫ")
+	print("Текущая сцена:", get_tree().current_scene.name)
+	print("Мой ID:", multiplayer.get_unique_id())
+	print("=")
+	
+	# 1. Скрываем основную игру
+	visible = false
+	if players_container:
+		players_container.visible = false
+	set_process(false)
+	
+	# 2. Останавливаем игроков
+	for player in players_container.get_children():
+		player.set_process(false)
+		player.set_physics_process(false)
+	
+	# 3. Загружаем сцену стрельбы
+	var shooting_scene_path = "res://Scenes/Minigames/Shooting/Shooting.tscn"
+	print("Пробую загрузить:", shooting_scene_path)
+	
+	if ResourceLoader.exists(shooting_scene_path):
+		var shooting_scene = load(shooting_scene_path)
+		var game_instance = shooting_scene.instantiate()
+		game_instance.name = "ShootingGame"
+		
+		# Подключаем сигнал завершения
+		if game_instance.has_signal("game_over"):
+			game_instance.game_over.connect(_on_shooting_game_over)
+			print("Сигнал game_over подключен")
+		else:
+			print("ВНИМАНИЕ: Сигнал game_over не найден!")
+			# Создаем таймер для авто-возврата
+			var timer = get_tree().create_timer(60.0)
+			timer.timeout.connect(_on_shooting_game_over)
+		
+		# Добавляем на сцену
+		add_child(game_instance)
+		current_minigame = game_instance
+		print("Мини-игра добавлена успешно!")
+	else:
+		print("ОШИБКА: Не могу найти файл сцены!")
+		# Аварийный возврат
+		_on_shooting_game_over()
+
+func _on_shooting_game_over():
+	print("=")
+	print("GAME.GD: ВОЗВРАТ ИЗ СТРЕЛЬБЫ")
+	print("=")
+	
+	# Удаляем мини-игру
+	if current_minigame and is_instance_valid(current_minigame):
+		current_minigame.queue_free()
+		current_minigame = null
+	
+	# Восстанавливаем основную игру
+	visible = true
+	if players_container:
+		players_container.visible = true
+	set_process(true)
+	
+	# Включаем игроков
+	for player in players_container.get_children():
+		player.set_process(true)
+		player.set_physics_process(true)
+		player.visible = true
+	
+	print("Возврат в основную игру завершен")

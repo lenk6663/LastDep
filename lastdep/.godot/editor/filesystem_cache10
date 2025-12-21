@@ -1,7 +1,8 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1766320167
+::res://::1766326978
 export_presets.cfg::TextFile::-1::1765661452::0::1::::<><><>0<>0<><>::
 icon.svg::CompressedTexture2D::6357927972926748031::1765642290::1765642383::1::::<><><>0<>0<>b32d03175af70c6c0f089755b8c2efa4<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
+README.md::TextFile::-1::1766321246::0::1::::<><><>0<>0<><>::
 ::res://Assets/::1765642322
 ::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/::1765642322
 ::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Character/::1765642383
@@ -32,12 +33,13 @@ Player.tscn::PackedScene::5981738900610117238::1765906801::0::1::::<><><>0<>0<><
 ::res://Scenes/Environments/::1765643329
 bg.gd::GDScript::4372589850715188283::1765642290::0::1::::<>ParallaxBackground<><>0<>0<><>::
 bg.tscn::PackedScene::8647751772718112119::1765642290::0::1::::<><><>0<>0<><>::uid://dm0lpqfus0l4q::::res://oak_woods_v1.0/background/background_layer_1.png<>uid://cybsjae2mvapj::::res://bg.gd<>uid://cf4j1xj8mr3ov::::res://oak_woods_v1.0/background/background_layer_2.png<>uid://8t14q2jp5oom::::res://oak_woods_v1.0/background/background_layer_3.png
-::res://Scenes/Main/::1766071574
+::res://Scenes/Main/::1766345964
 BattleshipTrigger.gd::GDScript::117778551299771793::1766071574::0::1::::<>Area2D<><>0<>0<><>::
-Game.gd::GDScript::8200539002554416583::1766071558::0::1::::<>Node2D<><>0<>0<><>::
-Game.tscn::PackedScene::2473131276583648854::1766069398::0::1::::<><><>0<>0<><>::uid://lonvlpn44mbl::::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Tileset/Tileset Spring.png<>uid://do3nxdhtmftwh::::res://Scenes/Main/Game.gd<>uid://cr1gbhg3ornn4::::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/House.png<>uid://cwie36sfmiiwd::::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Fence's copiar.png<>uid://duwuknpcna8rn::::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Interior.png<>uid://m5cbltj1alln::::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Maple Tree.png<>uid://y3giocwo6hp0::::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Road copiar.png<>uid://cigccn83euljt::::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Spring Crops.png<>uid://b0vmjnubpirki::::res://Scenes/Main/MinigameTrigger.gd<>uid://bxb2bvum48qf::::res://Scenes/Main/BattleshipTrigger.gd
+Game.gd::GDScript::8200539002554416583::1766326536::0::1::::<>Node2D<><>0<>0<><>::
+Game.tscn::PackedScene::2473131276583648854::1766346274::0::1::::<><><>0<>0<><>::uid://lonvlpn44mbl::::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Tileset/Tileset Spring.png<>uid://do3nxdhtmftwh::::res://Scenes/Main/Game.gd<>uid://cr1gbhg3ornn4::::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/House.png<>uid://cwie36sfmiiwd::::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Fence's copiar.png<>uid://duwuknpcna8rn::::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Interior.png<>uid://m5cbltj1alln::::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Maple Tree.png<>uid://y3giocwo6hp0::::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Road copiar.png<>uid://cigccn83euljt::::res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Spring Crops.png<>uid://b0vmjnubpirki::::res://Scenes/Main/MinigameTrigger.gd<>uid://bxb2bvum48qf::::res://Scenes/Main/BattleshipTrigger.gd<>uid://rxxjtp4kxg43::::res://Scenes/Main/ShootingTrigger.gd.gd
 MinigameTrigger.gd::GDScript::4185239097302962672::1765911430::0::1::::<>Area2D<><>0<>0<><>::
 NetworkingManager.gd::GDScript::8730324487271357607::1765905972::0::1::::<>Node<><>0<>0<><>::
+ShootingTrigger.gd.gd::GDScript::1242104615616319686::1766345963::0::1::::<>Area2D<><>0<>0<><>::
 ::res://Scenes/Main/lobby/::1765909826
 lobby.gd::GDScript::6430438337278879208::1765905842::0::1::::<>Control<><>0<>0<><>::
 lobby.tscn::PackedScene::3209538051366859956::1765909826::0::1::::<><><>0<>0<><>::uid://cxu7m6ghw6d2o::::res://Scenes/Main/lobby/lobby.gd
@@ -45,12 +47,19 @@ lobby.tscn::PackedScene::3209538051366859956::1765909826::0::1::::<><><>0<>0<><>
 menu.gd::GDScript::9171426965058454390::1765905855::0::1::::<>Control<><>0<>0<><>::
 menu.tscn::PackedScene::2554298675492009007::1765904725::0::1::::<><><>0<>0<><>::uid://d3wycd33kpe3w::::res://Scenes/Main/menu/menu.gd
 ::res://Scenes/Minigames/::1765643306
-::res://Scenes/Minigames/Battleship/::1766088716
+::res://Scenes/Minigames/Battleship/::1766325349
 battleship.gd::GDScript::160131635769815186::1766088716::0::1::::<>Node2D<><>0<>0<><>::
 battleship.tscn::PackedScene::2810485151931956187::1766088716::0::1::::<><><>0<>0<><>::uid://cjtlyn7lfeoo::::res://Scenes/Minigames/Battleship/battleship.gd
 ::res://Scenes/Minigames/Memory/::1765919524
 global.gd::GDScript::8899453125437043447::1765912824::0::1::::<>Node<><>0<>0<><>::
 memory.gd::GDScript::2533347401006825392::1765918793::0::1::::<>GridContainer<><>0<>0<><>::
 memory.tscn::PackedScene::4970012990276380951::1765918793::0::1::::<><><>0<>0<><>::uid://bcdf4j8cgu4nc::::res://Scenes/Minigames/Memory/memory.gd
-::res://Scenes/Minigames/Shooting/::1765643315
-shooting.tscn::PackedScene::8320914419766953869::1765642290::0::1::::<><><>0<>0<><>::
+::res://Scenes/Minigames/Shooting/::1766345753
+PlayerCart.gd::GDScript::3722080221726198076::1766327237::0::1::::PlayerCart<>Area2D<><>0<>0<><>::
+Dart.gd::GDScript::6762639423167506305::1766326471::0::1::::Dart<>Area2D<><>0<>0<><>::
+PlayerCart.tscn::PackedScene::3223316328384269216::1766327237::0::1::::<><><>0<>0<><>::uid://btbad81hp4ehg::::res://Scenes/Minigames/Shooting/PlayerCart.gd
+Dart.tscn::PackedScene::3345241540816371657::1766326795::0::1::::<><><>0<>0<><>::uid://c3l4xh4cnrieb::::res://Scenes/Minigames/Shooting/Dart.gd
+Target.tscn::PackedScene::1941944132480564358::1766326837::0::1::::<><><>0<>0<><>::uid://bdbasjtawt7dg::::res://Scenes/Minigames/Shooting/Target.gd
+Target.gd::GDScript::2599084238743164580::1766326490::0::1::::Target<>Area2D<><>0<>0<><>::
+Shooting.gd::GDScript::247046524986480156::1766327585::0::1::::<>Node2D<><>0<>0<><>::
+shooting.tscn::PackedScene::8320914419766953869::1766345753::0::1::::<><><>0<>0<><>::uid://drw25ece34f5::::res://Scenes/Minigames/Shooting/Shooting.gd
