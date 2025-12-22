@@ -1,4 +1,4 @@
-extends Node2D
+extends Control
 
 signal game_over
 
@@ -22,38 +22,35 @@ var target_speeds = {
 	TargetSize.LARGE: 50
 }
 
-var target_scales = {
-	TargetSize.SMALL: Vector2(0.5, 0.5),
-	TargetSize.MEDIUM: Vector2(0.75, 0.75),
-	TargetSize.LARGE: Vector2(1.0, 1.0)
-}
+# Ссылки на узлы
+@onready var 	timer_label = $CanvasLayer/VBoxContainer/HBoxContainer/TimerLabel
+@onready var 	player1_score_label = $CanvasLayer/VBoxContainer/HBoxContainer/Player1ScoreLabel
+@onready var 	player2_score_label = $CanvasLayer/VBoxContainer/HBoxContainer/Player2ScoreLabel
+@onready var 	winner_label = $CanvasLayer/VBoxContainer/WinnerLabel
+@onready var 	game_timer = $GameTimer
+@onready var 	spawn_timer = $SpawnTimer
+	
+@onready var 	player1_container = $CanvasLayer/VBoxContainer/MainGameContainer/GameArea/LeftRailArea/Player1Container
+@onready var 	player2_container = $CanvasLayer/VBoxContainer/MainGameContainer/GameArea/RightRailArea/Player2Container
+@onready var 	targets_container = $CanvasLayer/VBoxContainer/MainGameContainer/GameArea/TargetsArea/TargetsContainer
+@onready var 	targets_area = $CanvasLayer/VBoxContainer/MainGameContainer/GameArea/TargetsArea
 
 # Сетевые переменные
 var player_scores = {}
 var game_active = false
 var time_left = GAME_DURATION
 var targets = []
-var player_positions = {}
 var player_cooldowns = {}
-
-# Ссылки на узлы
-@onready var timer_label: Label = $CanvasLayer/TimerLabel
-@onready var player1_score_label: Label = $CanvasLayer/Player1ScoreLabel
-@onready var player2_score_label: Label = $CanvasLayer/Player2ScoreLabel
-@onready var winner_label: Label = $CanvasLayer/WinnerLabel
-@onready var game_timer: Timer = $GameTimer
-@onready var spawn_timer: Timer = $SpawnTimer
-@onready var players_container: Node2D = $GameArea/Players
-@onready var targets_container: Node2D = $GameArea/TargetsContainer
 
 var my_id: int
 var is_host: bool
+var player1_cart = null
+var player2_cart = null
 
 func _ready():
 	print("=== СТРЕЛЬБА ЗАПУЩЕНА ===")
 	print("Мой ID:", multiplayer.get_unique_id())
 	print("Это сервер?", multiplayer.is_server())
-	
 	# Инициализация
 	my_id = multiplayer.get_unique_id()
 	is_host = multiplayer.is_server()
@@ -68,14 +65,9 @@ func _ready():
 	else:
 		player_scores[my_id] = 0
 	
-	# Инициализация позиций игроков
-	player_positions[1] = Vector2(100, 300) if is_host else Vector2(100, 300)
-	var peers = multiplayer.get_peers()
-	if peers.size() > 0:
-		player_positions[peers[0]] = Vector2(700, 300) if is_host else Vector2(700, 300)
-	
 	# Инициализация задержек
 	player_cooldowns[1] = 0.0
+	var peers = multiplayer.get_peers()
 	if peers.size() > 0:
 		player_cooldowns[peers[0]] = 0.0
 	
@@ -87,51 +79,46 @@ func _ready():
 	
 	# Только хост управляет игрой
 	if is_host:
-		start_game.rpc()
-
-@rpc("authority", "call_local", "reliable")
-func start_game():
-	game_active = true
-	time_left = GAME_DURATION
-	game_timer.start(1.0)
-	spawn_timer.start(TARGET_SPAWN_INTERVAL)
-	
-	# Сигнал готовности для всех игроков
-	game_started.rpc()
-
-@rpc("authority", "call_local", "reliable")
-func game_started():
-	print("Игра началась!")
-	winner_label.visible = false
+		# Даем небольшую задержку для создания всех объектов
+		await get_tree().create_timer(0.5).timeout
+		start_game()
 
 func create_players():
-	for player_id in player_positions:
-		create_player_cart(player_id, player_positions[player_id])
+	print("Создание игроков...")
+	
+	# Игрок 1 (слева) - всегда хост
+	create_player_cart(1, player1_container)
+	
+	# Игрок 2 (справа) - второй игрок
+	var peers = multiplayer.get_peers()
+	if peers.size() > 0:  # Есть подключенный игрок
+		create_player_cart(peers[0], player2_container)
+	elif not multiplayer.is_server():  # Если клиент и нет других пиров
+		# Клиент создает себя
+		create_player_cart(my_id, player2_container)
 
-func create_player_cart(player_id: int, position: Vector2):
-	var cart = Area2D.new()
+func create_player_cart(player_id: int, container: Control):
+	print("Создание вагонетки для игрока", player_id)
+	
+	# Загружаем сцену вагонетки
+	var cart_scene = preload("res://Scenes/Minigames/Shooting/PlayerCart.tscn")
+	var cart = cart_scene.instantiate()
 	cart.name = str(player_id)
-	cart.position = position
 	
-	var sprite = Sprite2D.new()
-	# Загрузите текстуру вагонетки
-	# sprite.texture = preload("res://assets/cart.png")
-	cart.add_child(sprite)
+	# Добавляем в контейнер
+	container.add_child(cart)
 	
-	var collision = CollisionShape2D.new()
-	collision.shape = CircleShape2D.new()
-	collision.shape.radius = 20
-	cart.add_child(collision)
+	# Центрируем в контейнере
+	cart.position = Vector2(container.size.x / 2, container.size.y / 2)
 	
-	players_container.add_child(cart)
+	# Инициализируем
+	cart.init(player_id, player_id == my_id, self)
 	
-	# Если это наш игрок, добавляем управление
-	if player_id == my_id:
-		cart.set_script(preload("res://Scenes/Minigames/Shooting/PlayerCart.gd"))
-		cart.init(player_id, true, self)
+	# Сохраняем ссылку
+	if player_id == 1:
+		player1_cart = cart
 	else:
-		cart.set_script(preload("res://Scenes/Minigames/Shooting/PlayerCart.gd"))
-		cart.init(player_id, false, self)
+		player2_cart = cart
 
 func _process(delta):
 	if not game_active:
@@ -146,18 +133,63 @@ func _process(delta):
 	if is_host:
 		time_left -= delta
 		if time_left <= 0:
-			end_game.rpc()
+			end_game()
 		else:
 			update_timer.rpc(time_left)
 
-@rpc("authority", "call_local", "reliable")
-func update_timer(current_time: float):
-	time_left = current_time
-	var minutes = int(time_left) / 60
-	var seconds = int(time_left) % 60
-	timer_label.text = "Время: %02d:%02d" % [minutes, seconds]
+# Обычная функция для начала игры
+func start_game():
+	print("Хост начинает игру")
+	game_active = true
+	time_left = GAME_DURATION
+	
+	# Запускаем таймеры
+	game_timer.start(1.0)
+	spawn_timer.start(TARGET_SPAWN_INTERVAL)
+	
+	# Сигнал всем игрокам
+	start_game_rpc.rpc()
 
-@rpc("any_peer", "call_local", "reliable")
+# RPC версия для синхронизации
+@rpc("authority", "call_local", "reliable")
+func start_game_rpc():
+	print("Игра началась для всех игроков")
+	game_active = true
+	winner_label.visible = false
+
+func create_target():
+	if not is_host or not game_active:
+		return
+	
+	var size = randi() % 3
+	var target_width = targets_area.size.x
+	var x_pos = randf_range(0, target_width)
+	
+	var target = {
+		"id": randi() % 1000000,
+		"size": size,
+		"position": Vector2(x_pos, -30),  # Начинаем чуть выше экрана
+		"velocity": Vector2(0, target_speeds[size]),
+	}
+	
+	targets.append(target)
+	spawn_target.rpc(target)
+
+@rpc("authority", "call_local", "reliable")
+func spawn_target(target_data: Dictionary):
+	# Создаем мишень
+	var target_scene = preload("res://Scenes/Minigames/Shooting/Target.tscn")
+	var target = target_scene.instantiate()
+	target.name = "target_%d" % target_data.id
+	
+	# Позиционируем относительно targets_container
+	target.position = target_data.position
+	targets_container.add_child(target)
+	
+	# Инициализируем
+	target.init(target_data.id, target_data.size, target_data.velocity)
+
+# Функция для выстрела - вызывается из PlayerCart
 func request_fire(player_id: int):
 	if not game_active:
 		return
@@ -173,68 +205,52 @@ func request_fire(player_id: int):
 	create_dart(player_id)
 
 func create_dart(player_id: int):
-	var cart = players_container.get_node_or_null(str(player_id))
-	if not cart:
+	var cart = null
+	var container = null
+	
+	# Находим нужную вагонетку
+	if player_id == 1 and player1_cart:
+		cart = player1_cart
+		container = player1_container
+	elif player2_cart and (player2_cart.name == str(player_id) or player_id != 1):
+		cart = player2_cart
+		container = player2_container
+	
+	if not cart or not container:
+		print("Не могу найти вагонетку для игрока", player_id)
 		return
 	
-	var dart = Area2D.new()
-	dart.position = cart.position
-	dart.set_script(preload("res://Scenes/Minigames/Shooting/Dart.gd"))
+	# Загружаем сцену дротика
+	var dart_scene = preload("res://Scenes/Minigames/Shooting/Dart.tscn")
+	var dart = dart_scene.instantiate()
+	
+	# Позиция дротика - от вагонетки
+	# Преобразуем локальную позицию в глобальную
+	var cart_global_pos = cart.global_position
+	var container_global_pos = container.global_position
+	var dart_pos = cart_global_pos
+	
+	# Добавляем в контейнер мишеней (чтобы дротик был поверх всего)
+	targets_container.add_child(dart)
+	dart.global_position = dart_pos
+	
+	# Инициализируем
 	dart.init(player_id, DART_SPEED, self)
 	
-	add_child(dart)
-	fire_dart.rpc(player_id, dart.position)
+	# Синхронизируем с другими игроками
+	fire_dart.rpc(player_id, dart_pos)
 
 @rpc("authority", "call_local", "reliable")
 func fire_dart(player_id: int, position: Vector2):
-	# Создаем дротик для всех игроков
+	# Создаем дротик для всех игроков (визуально)
 	if player_id != my_id:
-		var dart = Area2D.new()
-		dart.position = position
-		dart.set_script(preload("res://Scenes/Minigames/Shooting/Dart.gd"))
+		var dart_scene = preload("res://Scenes/Minigames/Shooting/Dart.tscn")
+		var dart = dart_scene.instantiate()
 		dart.init(player_id, DART_SPEED, self, true)
-		add_child(dart)
+		targets_container.add_child(dart)
+		dart.global_position = position
 
-func create_target():
-	if not is_host:
-		return
-	
-	var size = randi() % 3
-	var x_pos = randf_range(200, 600)
-	var target = {
-		"id": randi() % 1000000,
-		"size": size,
-		"position": Vector2(x_pos, 0),
-		"velocity": Vector2(0, target_speeds[size]),
-		"scale": target_scales[size]
-	}
-	
-	targets.append(target)
-	spawn_target.rpc(target)
-
-@rpc("authority", "call_local", "reliable")
-func spawn_target(target_data: Dictionary):
-	# Создаем мишень визуально
-	var target = Area2D.new()
-	target.name = "target_%d" % target_data.id
-	target.position = target_data.position
-	
-	var sprite = Sprite2D.new()
-	# Загрузите текстуру мишени
-	# sprite.texture = preload("res://assets/target.png")
-	sprite.scale = target_data.scale
-	target.add_child(sprite)
-	
-	var collision = CollisionShape2D.new()
-	collision.shape = CircleShape2D.new()
-	collision.shape.radius = 20 * target_data.scale.x
-	target.add_child(collision)
-	
-	target.set_script(preload("res://Scenes/Minigames/Shooting/Target.gd"))
-	target.init(target_data.id, target_data.size, target_data.velocity)
-	
-	targets_container.add_child(target)
-
+# Функция для попадания в мишень
 func hit_target(target_id: int, player_id: int, target_size: int):
 	if not is_host or not game_active:
 		return
@@ -262,8 +278,6 @@ func target_hit(target_id: int, player_id: int, points: int, new_score: int):
 	# Обновляем счет
 	player_scores[player_id] = new_score
 	update_score(player_id, new_score)
-	
-	# Эффект попадания (можно добавить частицы)
 
 func remove_target(target_id: int):
 	var target = targets_container.get_node_or_null("target_%d" % target_id)
@@ -292,7 +306,15 @@ func update_ui():
 		timer_label.text = "Время: 01:00"
 
 @rpc("authority", "call_local", "reliable")
+func update_timer(current_time: float):
+	time_left = current_time
+	var minutes = int(time_left) / 60
+	var seconds = int(time_left) % 60
+	timer_label.text = "Время: %02d:%02d" % [minutes, seconds]
+
+# Обычная функция для завершения игры
 func end_game():
+	print("Хост завершает игру")
 	game_active = false
 	game_timer.stop()
 	spawn_timer.stop()
@@ -307,13 +329,17 @@ func end_game():
 			winner_id = player_id
 	
 	var winner_text = ""
-	if player_scores.get(1, 0) == player_scores.get(multiplayer.get_peers()[0] if multiplayer.get_peers().size() > 0 else 2, 0):
+	var peers = multiplayer.get_peers()
+	var player2_id = peers[0] if peers.size() > 0 else 2
+	
+	if player_scores.get(1, 0) == player_scores.get(player2_id, 0):
 		winner_text = "НИЧЬЯ!"
 	elif winner_id == 1:
 		winner_text = "ПОБЕДИЛ ИГРОК 1!"
 	else:
 		winner_text = "ПОБЕДИЛ ИГРОК 2!"
 	
+	# Показываем победителя всем
 	show_winner.rpc(winner_text)
 
 @rpc("authority", "call_local", "reliable")
