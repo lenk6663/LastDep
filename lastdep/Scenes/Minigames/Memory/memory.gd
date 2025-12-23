@@ -69,28 +69,104 @@ func _ready():
 func load_card_textures():
 	card_textures.clear()
 	
-	# Загружаем текстуры (нужно 21 уникальная картинка)
-	for i in range(1, 22):  # 1-21
-		var texture = load("res://Assets/MemoryGame/%d.png" % i)
-		if texture:
-			card_textures.append(texture)
-			print("Загружена текстура:", i)
-		else:
-			print("Ошибка загрузки текстуры:", i)
-			# Создаем цветную карточку если текстуры нет
-			var image = Image.create(64, 64, false, Image.FORMAT_RGBA8)
-			var color = Color.from_hsv(float(i)/21.0, 0.7, 0.9)
-			image.fill(color)
-			var tex = ImageTexture.create_from_image(image)
-			card_textures.append(tex)
+	# Загружаем атлас текстур
+	var atlas_texture = load("res://Assets/Minigames/MemoryGame/pixel_card_atlas.png")
+	
+	if not atlas_texture:
+		print("ОШИБКА: Не удалось загрузить pixel_card_atlas.png")
+		# Создаем резервные текстуры
+		create_fallback_textures()
+		return
+	
+	print("Атлас загружен, размер: ", atlas_texture.get_size())
+	
+	# Размеры карточек в атласе (16x16)
+	const CARD_WIDTH = 16
+	const CARD_HEIGHT = 16
+	const ATLAS_COLUMNS = 8  # 8 карточек в строке
+	const ATLAS_ROWS = 4     # 4 строки
+	
+	# Создаем AtlasTexture для каждой карточки (0-20) + рубашка (21)
+	for i in range(22):  # 21 уникальных карт + 1 рубашка
+		# Вычисляем координаты в атласе
+		var row = i / ATLAS_COLUMNS
+		var col = i % ATLAS_COLUMNS
+		
+		# Проверяем, что не вышли за пределы атласа
+		if row >= ATLAS_ROWS:
+			print("ОШИБКА: Карточка ", i, " выходит за пределы атласа")
+			continue
+		
+		# Создаем AtlasTexture
+		var atlas_tex = AtlasTexture.new()
+		atlas_tex.atlas = atlas_texture
+		
+		# Устанавливаем регион карточки в атласе
+		atlas_tex.region = Rect2(
+			col * CARD_WIDTH,    # X
+			row * CARD_HEIGHT,   # Y
+			CARD_WIDTH,          # Ширина
+			CARD_HEIGHT          # Высота
+		)
+		
+		card_textures.append(atlas_tex)
+		print("Создана AtlasTexture для карточки ", i, " регион: ", atlas_tex.region)
 	
 	# Проверяем что текстур достаточно
 	if card_textures.size() < CARD_PAIRS:
-		print("ВНИМАНИЕ: Недостаточно текстур! Нужно ", CARD_PAIRS, ", есть ", card_textures.size())
+		print("ВНИМАНИЕ: Недостаточно текстур в атласе! Нужно ", CARD_PAIRS, ", есть ", card_textures.size())
 		# Дублируем существующие текстуры если не хватает
 		while card_textures.size() < CARD_PAIRS:
 			for i in range(min(card_textures.size(), CARD_PAIRS - card_textures.size())):
 				card_textures.append(card_textures[i])
+	
+	# Отдельно сохраняем рубашку (индекс 21)
+	var card_back_texture = null
+	if card_textures.size() > 21:
+		card_back_texture = card_textures[21]
+		print("Рубашка карты сохранена (индекс 21)")
+	else:
+		print("ОШИБКА: Нет рубашки в атласе!")
+	
+	# Дополнительная проверка
+	print("Всего загружено текстур из атласа: ", card_textures.size())
+
+# Резервная функция на случай если атлас не загрузился
+func create_fallback_textures():
+	print("Создаю резервные текстуры...")
+	
+	for i in range(CARD_PAIRS):
+		# Создаем простые цветные карточки
+		var image = Image.create(64, 64, false, Image.FORMAT_RGBA8)
+		var color = Color.from_hsv(float(i) / CARD_PAIRS, 0.7, 0.9)
+		image.fill(color)
+		
+		# Добавляем номер для различия
+		for y in range(8):
+			for x in range(8):
+				if (x + y) % 2 == 0:
+					var dark_color = color.darkened(0.3)
+					image.set_pixel(x + 28, y + 28, dark_color)
+		
+		var tex = ImageTexture.create_from_image(image)
+		card_textures.append(tex)
+	
+	# Создаем рубашку
+	var back_image = Image.create(64, 64, false, Image.FORMAT_RGBA8)
+	var back_color = Color.from_hsv(0.6, 0.8, 0.9)  # Синий
+	back_image.fill(back_color)
+	
+	# Шахматный узор для рубашки
+	for y in range(64):
+		for x in range(64):
+			if (x / 8 + y / 8) % 2 == 0:
+				var pattern_color = back_color.darkened(0.2)
+				back_image.set_pixel(x, y, pattern_color)
+	
+	var back_tex = ImageTexture.create_from_image(back_image)
+	card_textures.append(back_tex)  # Рубашка в конце
+	
+	print("Создано резервных текстур: ", card_textures.size())
 
 func create_cards():
 	# Очищаем старые карты
@@ -102,10 +178,17 @@ func create_cards():
 	# Создаем карты
 	for i in range(CARD_PAIRS * 2):
 		var card = Button.new()
-		card.custom_minimum_size = Vector2(80, 80)  # Можно уменьшить для 7x6 сетки
+		card.custom_minimum_size = Vector2(80, 80)
 		card.name = "Card_%d" % i
-		card.text = "?"
-		card.add_theme_font_size_override("font_size", 20)  # Уменьшаем шрифт
+		card.text = ""
+		
+		# Настраиваем отображение иконки
+		card.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER  # Горизонтальное центрирование
+		card.expand_icon = true  # Растягиваем иконку
+		
+		# Устанавливаем рубашку при создании
+		if card_textures.size() > 21:
+			card.icon = card_textures[21]  # Рубашка
 		
 		card.set_meta("card_index", i)
 		card.set_meta("is_flipped", false)
@@ -247,12 +330,16 @@ func flip_card(card_index: int, show_front: bool):
 		var card_value = card.get_meta("card_value", 0)
 		if card_value < card_textures.size():
 			card.icon = card_textures[card_value]
-		card.text = ""
+		card.text = ""  # Оставляем пустой текст
 		card.set_meta("is_flipped", true)
 		print("Карта ", card_index, " перевернута (значение: ", card_value, ")")
 	else:
-		card.icon = null
-		card.text = "?"
+		# Используем рубашку (последняя текстура в массиве)
+		if card_textures.size() > 21:
+			card.icon = card_textures[21]  # Рубашка
+		else:
+			card.icon = null
+		card.text = ""
 		card.set_meta("is_flipped", false)
 		print("Карта ", card_index, " скрыта")
 
