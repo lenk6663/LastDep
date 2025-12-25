@@ -8,14 +8,21 @@ extends Control
 @onready var my_ip_input: LineEdit = $Panel/VBoxContainer/MyIPContainer/MyIPInput
 @onready var copy_my_ip_button: Button = $Panel/VBoxContainer/MyIPContainer/CopyMyIPButton
 @onready var exit_button: Button = $Panel/VBoxContainer/ExitButton
+@onready var settings_button: Button = $Panel/VBoxContainer/SettingsButton
+@onready var background_music = get_node("/root/BackgroundMusic") if get_tree().root.has_node("/root/BackgroundMusic") else null
 
-# Добавляем загрузку сцены лобби
-const LOBBY_SCENE = preload("res://Scenes/Main/lobby/lobby.tscn")  # Укажите правильный путь
+# Добавляем загрузку сцен
+const SETTINGS_SCENE = preload("res://Scenes/Main/settings/settings.tscn")
+const LOBBY_SCENE = preload("res://Scenes/Main/lobby/lobby.tscn") 
 
 func _ready():
 	add_to_group("menu")
 	print("Меню загружено")
 	
+	if background_music:
+		background_music.back_to_menu()
+		print("Музыка меню включена")
+		
 	# Начальное состояние
 	ip_panel.visible = false
 	
@@ -27,6 +34,7 @@ func _ready():
 	connect_button.pressed.connect(_on_connect_pressed)
 	copy_my_ip_button.pressed.connect(_on_copy_my_ip_pressed)
 	exit_button.pressed.connect(_on_exit_pressed)
+	settings_button.pressed.connect(_on_settings_pressed)
 
 func _setup_ip_fields():
 	# Заполняем поле "Подключиться к IP"
@@ -39,6 +47,17 @@ func _setup_ip_fields():
 	if my_ip:
 		my_ip_input.text = my_ip
 		my_ip_input.placeholder_text = my_ip
+		
+func _on_settings_pressed():
+	print("Открытие настроек...")
+	if SETTINGS_SCENE:
+		var settings_instance = SETTINGS_SCENE.instantiate()
+		get_tree().root.add_child(settings_instance)
+		# Скрываем меню
+		hide()
+		print("Окно настроек открыто")
+	else:
+		print("ОШИБКА: Не могу загрузить сцену настроек!")
 
 func _get_my_ip_for_connection() -> String:
 	for ip in IP.get_local_addresses():
