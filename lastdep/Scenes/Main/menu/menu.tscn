@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://bcnk6qpn8xpf8"]
+[gd_scene load_steps=3 format=3 uid="uid://bcnk6qpn8xpf8"]
 
 [ext_resource type="Script" uid="uid://c3jqc036pu7fb" path="res://Scenes/Main/menu/menu.gd" id="1_lti8b"]
+[ext_resource type="PackedScene" uid="uid://cg6qfv76ursya" path="res://Scenes/Main/Background/background.tscn" id="2_ax2us"]
 
 [node name="Menu" type="Control"]
 layout_mode = 3
@@ -11,7 +12,12 @@ anchor_right = 0.5
 anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 script = ExtResource("1_lti8b")
+
+[node name="Background" parent="." instance=ExtResource("2_ax2us")]
+layer = -1
 
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 1

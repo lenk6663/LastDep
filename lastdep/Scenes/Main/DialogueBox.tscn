@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://b8dx7nro0on3s"]
 
-[ext_resource type="Script" uid="uid://dbuavyn0rahsl" path="res://Scenes/Main/MemoryDialogueBox.gd" id="1_itdgf"]
+[ext_resource type="Script" uid="uid://dyf1pp62gtvdy" path="res://Scenes/Main/MemoryDialogueBox.gd" id="1_itdgf"]
 
 [sub_resource type="SystemFont" id="SystemFont_itdgf"]
 
