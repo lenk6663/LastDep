@@ -1,7 +1,6 @@
 [gd_scene load_steps=27 format=4 uid="uid://bbiad1c0ejv4a"]
 
 [ext_resource type="Texture2D" uid="uid://lonvlpn44mbl" path="res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Tileset/Tileset Spring.png" id="1_3mrqo"]
-[ext_resource type="Script" uid="uid://cfd34pd8t80mp" path="res://Scenes/Main/Game.gd" id="1_dyb2d"]
 [ext_resource type="Script" uid="uid://yky2qbk7yrid" path="res://Scenes/Main/Game.gd" id="1_dyb2d"]
 [ext_resource type="Texture2D" uid="uid://cr1gbhg3ornn4" path="res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/House.png" id="2_joorw"]
 [ext_resource type="Texture2D" uid="uid://cwie36sfmiiwd" path="res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Fence's copiar.png" id="3_2vekm"]
