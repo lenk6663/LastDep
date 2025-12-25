@@ -6,6 +6,7 @@ const PLAYER_SCENE = preload("res://Player/Player.tscn")
 var current_minigame = null
 var minigame_active = false
 var battleship_minigame_active = false
+var minigame_queues = {}
 
 # В Game.gd в функции add_minigame_triggers() замените на:
 func add_minigame_triggers():
@@ -25,10 +26,15 @@ func create_npc(minigame_type: String, position: Vector2):
 	npc.position = position
 	npc.npc_name = "Ведущий " + minigame_type
 	npc.minigame_type = minigame_type
-	# УБИРАЕМ dialogue_data! Диалог будет использовать свой текст
+	
+	# Устанавливаем авторитет на сервер
+	if multiplayer.is_server():
+		npc.set_multiplayer_authority(1)
 	
 	add_child(npc)
 	print("NPC для " + minigame_type + " создан на позиции:", position)
+	
+	return npc
 
 func _ready():
 	print("=== ИГРА ЗАПУЩЕНА ===")
@@ -88,43 +94,85 @@ func _exit_tree():
 	
 func start_memory_minigame():
 	print("=")
-	print("GAME.GD: ЗАПУСК МИНИ-ИГРЫ")
+	print("GAME.GD: ЗАПУСК МИНИ-ИГРЫ ПАМЯТЬ")
+	print("Сервер? ", multiplayer.is_server())
+	print("Мой ID: ", multiplayer.get_unique_id())
 	print("=")
 	
+	# И сервер, и клиент ДОЛЖНЫ создавать свою копию игры
+	# Скрываем основную игру
 	visible = false
-	players_container.visible = false
-	
+	if players_container:
+		players_container.visible = false
 	set_process(false)
-	for player in players_container.get_children():
-		player.set_process(false)
-		player.set_physics_process(false)
+	
+	if players_container:
+		for player in players_container.get_children():
+			player.set_process(false)
+			player.set_physics_process(false)
 	
 	var memory_scene = preload("res://Scenes/Minigames/Memory/memory.tscn")
 	if not memory_scene:
 		print("ОШИБКА: Не могу загрузить сцену Memory!")
+		_on_memory_game_over()
 		return
 	
 	var game = memory_scene.instantiate()
 	game.name = "MemoryGame"
+	
 	print("Подключаю сигнал game_over...")
 	
+	# Подключаем сигнал
+	var callable = Callable(self, "_on_memory_game_over")
 	if game.has_signal("game_over"):
-		game.game_over.connect(func(): 
-			print("!!! СИГНАЛ game_over ПОЛУЧЕН В GAME.GD !!!")
-			_on_memory_game_over()
-		)
-		print("Сигнал подключен через лямбду")
+		game.game_over.connect(callable)
+		print("Сигнал game_over подключен")
 	else:
-		print("ОШИБКА: Сигнал game_over не найден в мини-игре!")
-		get_tree().create_timer(300.0).timeout.connect(
-			func(): 
-				print("АВТО-ВОЗВРАТ по таймауту")
-				_on_memory_game_over()
-		)
+		print("ОШИБКА: Сигнал game_over не найден!")
+		game.add_user_signal("game_over")
 	
 	add_child(game)
 	current_minigame = game
-	print("Мини-игра добавлена")
+	print("Мини-игра добавлена (peer: ", multiplayer.get_unique_id(), ")")
+
+# Добавьте RPC функцию для синхронизации:
+@rpc("authority", "call_local", "reliable")
+func start_minigame_on_client(minigame_type: String):
+	if multiplayer.is_server():
+		return  # Сервер уже создал игру
+	
+	print("КЛИЕНТ: получаю команду запустить ", minigame_type)
+	
+	match minigame_type:
+		"memory":
+			start_memory_minigame()
+		"battleship":
+			start_battleship_minigame()
+		"shooting":
+			start_shooting_minigame()
+
+@rpc("authority", "call_remote", "reliable")
+func sync_memory_game_state(is_active: bool, current_player: int, game_data: Array):
+	if not multiplayer.is_server():
+		print("КЛИЕНТ: получено состояние игры. Активна:", is_active, " Текущий игрок:", current_player)
+		
+		# Проверяем, создана ли уже игра на клиенте
+		if not current_minigame:
+			print("КЛИЕНТ: создаю локальную копию игры для отображения")
+			var memory_scene = preload("res://Scenes/Minigames/Memory/memory.tscn")
+			if memory_scene:
+				var game = memory_scene.instantiate()
+				game.name = "MemoryGame"
+				add_child(game)
+				current_minigame = game
+				
+				# Подключаем сигнал завершения
+				if game.has_signal("game_over"):
+					game.game_over.connect(Callable(self, "_on_memory_game_over"))
+		
+		# Обновляем состояние игры на клиенте
+		if current_minigame and current_minigame.has_method("update_game_state"):
+			current_minigame.update_game_state(is_active, current_player, game_data)
 
 func _on_memory_game_over():
 	print("=")
@@ -293,4 +341,29 @@ func _on_shooting_game_over():
 		player.visible = true
 	
 	print("Возврат в основную игру завершен")
+
+@rpc("authority", "call_remote", "reliable")
+func sync_minigame_start(minigame_type: String, players: Array):
+	print("СИНХРОНИЗАЦИЯ ЗАПУСКА: ", minigame_type, " для игроков: ", players)
 	
+	match minigame_type:
+		"memory":
+			start_memory_minigame()
+		"battleship":
+			start_battleship_minigame()
+		"shooting":
+			start_shooting_minigame()
+
+func queue_minigame_start(minigame_type: String, players: Array):
+	if multiplayer.is_server():
+		print("СЕРВЕР: Ставлю в очередь мини-игру ", minigame_type)
+		minigame_queues[minigame_type] = players
+		sync_minigame_start.rpc(minigame_type, players)
+		# Запускаем локально на сервере
+		match minigame_type:
+			"memory":
+				start_memory_minigame()
+			"battleship":
+				start_battleship_minigame()
+			"shooting":
+				start_shooting_minigame()

@@ -16,6 +16,13 @@ var dialogue_instance = null
 func _ready():
 	print("[NPC DEBUG] NPC '", npc_name, "' готов. Позиция: ", position)
 	
+	# УСТАНАВЛИВАЕМ АВТОРИТЕТ ТОЛЬКО ДЛЯ СЕРВЕРА
+	if multiplayer.is_server():
+		set_multiplayer_authority(1)  # Сервер
+	else:
+		# Клиенты НЕ авторитарны над NPC
+		pass
+	
 	if anim_sprite:
 		anim_sprite.play("idle")
 	
@@ -179,11 +186,9 @@ func toggle_player_ready(player_id: int):
 		return
 	
 	if player_id in ready_players:
-		# Убираем готовность
 		ready_players.erase(player_id)
 		print("[NPC] Игрок ", player_id, " снял готовность")
 	else:
-		# Добавляем готовность
 		ready_players.append(player_id)
 		print("[NPC] Игрок ", player_id, " готов")
 	
@@ -194,7 +199,9 @@ func toggle_player_ready(player_id: int):
 	if multiplayer.is_server() and ready_players.size() >= 2 and not minigame_active:
 		print("[NPC] Оба игрока готовы!")
 		minigame_active = true
-		start_countdown.rpc()
+		
+		# ТОЛЬКО сервер запускает отсчет
+		start_game_countdown()
 
 @rpc("authority", "call_local", "reliable")
 func sync_ready_players(players_list: Array):
@@ -227,58 +234,38 @@ func update_all_dialogue_windows(players_list: Array):
 			dialog.call_deferred("set_ready_players", players_list.duplicate())
 		else:
 			print("[NPC UPDATE] Диалог невалиден или не имеет метода set_ready_players")
-@rpc("authority", "call_local", "reliable")
-func start_countdown():
-	print("[NPC] Начинаем обратный отсчет")
+@rpc("authority", "call_local", "reliable")  
+func start_game_countdown():
+	print("[NPC] Начинаем отсчет до начала игры")
 	minigame_active = true
+	
+	# Обновляем все диалоговые окна
+	if dialogue_instance and is_instance_valid(dialogue_instance):
+		dialogue_instance.show_countdown()
 	
 	# 3 секунды отсчета
 	for i in range(3, 0, -1):
-		print("[NPC] Отсчет: ", i, "...")
-		update_countdown_display.rpc(i)
+		if interaction_label:
+			interaction_label.text = "Начинаем через %d..." % i
 		await get_tree().create_timer(1.0).timeout
 	
-	update_countdown_display.rpc(0)
-	await get_tree().create_timer(1.0).timeout
-	launch_minigame.rpc()
+	if interaction_label:
+		interaction_label.text = "Старт!"
+	
+	await get_tree().create_timer(0.5).timeout
+	
+	# ВМЕСТО прямого вызова мини-игры используем новую систему
+	launch_minigame()
 
 @rpc("authority", "call_local", "reliable")
 func update_countdown_display(step):
+	# Эта функция вызывается только сервером, клиенты просто отображают
 	if step > 0:
 		if interaction_label:
 			interaction_label.text = "Начинаем через %d..." % step
 	else:
 		if interaction_label:
 			interaction_label.text = "Старт!"
-
-@rpc("authority", "call_local", "reliable")
-func launch_minigame():
-	print("[NPC] Запуск мини-игры")
-	
-	# Закрываем все диалоги
-	if dialogue_instance and is_instance_valid(dialogue_instance):
-		dialogue_instance.queue_free()
-		dialogue_instance = null
-	
-	if interaction_label:
-		interaction_label.text = "Запуск игры..."
-	
-	# Даем время для отображения
-	await get_tree().create_timer(0.5).timeout
-	
-	# Запускаем мини-игру через главную сцену
-	var game = get_tree().current_scene
-	if game:
-		match minigame_type:
-			"memory":
-				if game.has_method("start_memory_minigame"):
-					game.start_memory_minigame()
-			"battleship":
-				if game.has_method("start_battleship_minigame"):
-					game.start_battleship_minigame()
-			"shooting":
-				if game.has_method("start_shooting_minigame"):
-					game.start_shooting_minigame()
 
 func close_dialogue(player_name: String):
 	if dialogue_instance and is_instance_valid(dialogue_instance):
@@ -291,3 +278,45 @@ func close_dialogue(player_name: String):
 func _on_dialogue_closed(player_name: String):
 	print("[NPC] Диалог закрыт игроком ", player_name)
 	dialogue_instance = null
+	
+# ЗАМЕНИТЬ существующую функцию launch_minigame на эту:
+func launch_minigame():
+	print("NPC: Запуск мини-игры типа: " + minigame_type)
+	
+	# Закрываем все открытые диалоги
+	if dialogue_instance and is_instance_valid(dialogue_instance):
+		dialogue_instance.queue_free()
+		dialogue_instance = null
+	
+	# Скрываем статус
+	if interaction_label:
+		interaction_label.visible = false
+	
+	# Получаем список готовых игроков
+	var players_to_start = ready_players.duplicate()
+	reset_npc()
+	
+	# Запускаем мини-игру через Game.gd
+	var game = get_tree().current_scene
+	if game and game.has_method("queue_minigame_start"):
+		print("NPC: Отправляем запрос на запуск мини-игры для игроков: ", players_to_start)
+		
+		if multiplayer.is_server():
+			# Сервер запускает мини-игру для всех
+			game.queue_minigame_start(minigame_type, players_to_start)
+		else:
+			# Клиент отправляет запрос серверу
+			request_minigame_start.rpc_id(1, minigame_type, players_to_start)
+func reset_npc():
+	ready_players.clear()
+	minigame_active = false
+	if interaction_label:
+		interaction_label.visible = false
+		
+@rpc("any_peer", "call_local", "reliable")
+func request_minigame_start(game_type: String, players: Array):
+	if multiplayer.is_server():
+		print("СЕРВЕР: Получен запрос на запуск мини-игры ", game_type)
+		var game = get_tree().current_scene
+		if game and game.has_method("queue_minigame_start"):
+			game.queue_minigame_start(game_type, players)

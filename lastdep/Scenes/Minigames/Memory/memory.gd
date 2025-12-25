@@ -33,17 +33,15 @@ var card_back_texture: Texture2D
 var game_time = 0
 var game_timeout_timer: SceneTreeTimer
 
+# В функции _ready() заменить блок с инициализацией игры:
 func _ready():
 	print("Memory: Игра запущена")
+	print("Мой ID:", multiplayer.get_unique_id(), " Сервер:", multiplayer.is_server())
 	
-	# ПРОВЕРЯЕМ что сигнал создан
+	# Создаем сигнал если его нет
 	if not has_signal("game_over"):
-		print("ОШИБКА: Сигнал game_over не создан! Создаю...")
+		print("Создаю сигнал game_over...")
 		add_user_signal("game_over")
-		print("Сигнал создан: ", has_signal("game_over"))
-	
-	# Проверяем количество подключений к сигналу
-	print("Количество подключений к сигналу: ", game_over.get_connections().size())
 	
 	# Настраиваем сетку
 	columns = GRID_COLUMNS
@@ -58,15 +56,55 @@ func _ready():
 	# Настраиваем UI
 	setup_ui()
 	
+	# Унифицированная инициализация - и сервер и клиент ждут команды
+	print("Ожидание инициализации игры...")
+	
+	if game_status_label:
+		game_status_label.text = "Ожидание начала игры..."
+	
+	# Ждем сигнала от Game.gd для начала
+	await get_tree().create_timer(0.5).timeout
+	
 	# Если сервер - инициализируем игру
 	if multiplayer.is_server():
 		print("СЕРВЕР: Инициализирую игру")
 		init_game()
-		start_game.rpc()
 	else:
-		print("КЛИЕНТ: Жду начала игры")
-		if game_status_label:
-			game_status_label.text = "Ожидание начала игры..."
+		print("КЛИЕНТ: Ожидаю данные от сервера")
+
+# ВАЖНО: Уберите весь старый код с start_game_for_all.rpc()
+# и просто вызывайте start_game() после init_game():
+func init_game():
+	print("СЕРВЕР: Генерация значений карт")
+	
+	card_values = []
+	for i in range(CARD_PAIRS):
+		card_values.append(i)
+		card_values.append(i)
+	
+	card_values.shuffle()
+	print("Сгенерировано ", card_values.size(), " значений")
+	
+	# Синхронизируем состояние со всеми
+	sync_game_state.rpc(card_values, 0)
+	
+	# ЗАПУСКАЕМ ИГРУ НА ВСЕХ (включая сервер)
+	start_game.rpc()
+
+@rpc("authority", "call_local", "reliable")
+func start_game():
+	print("СТАРТ ИГРЫ получен")
+	game_started = true
+	
+	# Запускаем таймер обратного отсчета
+	start_countdown_timer()
+	
+	can_play = multiplayer.is_server()
+	update_game_ui()
+	
+	if game_status_label:
+		game_status_label.text = "Игра началась!"
+		game_status_label.add_theme_color_override("font_color", Color.GREEN)
 
 func load_card_textures():
 	print("Загрузка текстур карточек...")
@@ -256,19 +294,6 @@ func setup_ui():
 	
 	if timer_label:
 		timer_label.text = "Время: 05:00"
-
-func init_game():
-	print("СЕРВЕР: Генерация значений карт")
-	
-	card_values = []
-	for i in range(CARD_PAIRS):
-		card_values.append(i)
-		card_values.append(i)
-	
-	card_values.shuffle()
-	print("Сгенерировано ", card_values.size(), " значений")
-	
-	sync_game_state.rpc(card_values, 0)
 
 @rpc("authority", "call_local", "reliable")
 func sync_game_state(values: Array, starting_player: int):
@@ -463,21 +488,6 @@ func sync_player_turn(player_index: int):
 	current_player = player_index
 	can_play = multiplayer.is_server() if current_player == 0 else not multiplayer.is_server()
 	update_game_ui()
-
-@rpc("authority", "call_local", "reliable")
-func start_game():
-	print("СТАРТ ИГРЫ получен")
-	game_started = true
-	
-	# Запускаем таймер обратного отсчета
-	start_countdown_timer()
-	
-	can_play = multiplayer.is_server()
-	update_game_ui()
-	
-	if game_status_label:
-		game_status_label.text = "Игра началась!"
-		game_status_label.add_theme_color_override("font_color", Color.GREEN)
 
 func start_countdown_timer():
 	print("ТАЙМЕР: Запуск (300 секунд)")

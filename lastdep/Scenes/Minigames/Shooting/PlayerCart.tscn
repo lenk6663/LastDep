@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://bl6nswv0hwflw"]
+[gd_scene load_steps=4 format=3 uid="uid://bl6nswv0hwflw"]
 
 [ext_resource type="Script" uid="uid://btbad81hp4ehg" path="res://Scenes/Minigames/Shooting/PlayerCart.gd" id="1_7b2nm"]
+[ext_resource type="Texture2D" uid="uid://cvhghfql2738h" path="res://Assets/Minigames/Shooting/cart_red.png" id="2_0t1sh"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_7b2nm"]
 size = Vector2(49, 34)
@@ -9,21 +10,10 @@ size = Vector2(49, 34)
 script = ExtResource("1_7b2nm")
 
 [node name="Sprite" type="Sprite2D" parent="."]
-
-[node name="ColorRect" type="ColorRect" parent="Sprite"]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -24.5
-offset_top = -17.0
-offset_right = 24.5
-offset_bottom = 17.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.974397, 0, 0.08753661, 1)
+texture = ExtResource("2_0t1sh")
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 position = Vector2(0.5, 1)
 shape = SubResource("RectangleShape2D_7b2nm")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]

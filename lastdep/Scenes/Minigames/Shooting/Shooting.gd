@@ -97,45 +97,27 @@ func create_players():
 		# Клиент создает себя
 		create_player_cart(my_id, player2_container)
 
+# В функции create_player_cart:
 func create_player_cart(player_id: int, container: Control):
 	print("Создание вагонетки для игрока", player_id)
 	
-	# Загружаем сцену вагонетки
 	var cart_scene = preload("res://Scenes/Minigames/Shooting/PlayerCart.tscn")
 	var cart = cart_scene.instantiate()
-	cart.name = str(player_id)
-	
-	# Добавляем в контейнер
 	container.add_child(cart)
 	
-	# Центрируем в контейнере
+	# Центрируем
 	cart.position = Vector2(container.size.x / 2, container.size.y / 2)
 	
-	# Инициализируем
-	cart.init(player_id, player_id == my_id, self)
+	# Инициализируем (теперь передаем 4 параметра)
+	cart.init(player_id, player_id == my_id, self, container.size.y)
 	
 	# Сохраняем ссылку
 	if player_id == 1:
 		player1_cart = cart
 	else:
 		player2_cart = cart
-
-func _process(delta):
-	if not game_active:
-		return
 	
-	# Обновляем задержки выстрелов
-	for player_id in player_cooldowns:
-		if player_cooldowns[player_id] > 0:
-			player_cooldowns[player_id] -= delta
-	
-	# Обновляем таймер
-	if is_host:
-		time_left -= delta
-		if time_left <= 0:
-			end_game()
-		else:
-			update_timer.rpc(time_left)
+	return cart
 
 # Обычная функция для начала игры
 func start_game():
