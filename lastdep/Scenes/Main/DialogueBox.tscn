@@ -1,0 +1,58 @@
+[gd_scene load_steps=3 format=3 uid="uid://b8dx7nro0on3s"]
+
+[ext_resource type="Script" uid="uid://dbuavyn0rahsl" path="res://Scenes/Main/MemoryDialogueBox.gd" id="1_itdgf"]
+
+[sub_resource type="SystemFont" id="SystemFont_itdgf"]
+
+[node name="DialogueBox" type="Node2D"]
+z_index = 4
+script = ExtResource("1_itdgf")
+
+[node name="Panel" type="Panel" parent="."]
+custom_minimum_size = Vector2(200, 150)
+offset_right = 300.0
+offset_bottom = 200.0
+
+[node name="Background" type="ColorRect" parent="Panel"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TitleLabel" type="Label" parent="Panel"]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 5.0
+offset_right = 237.0
+offset_bottom = 28.0
+theme_override_fonts/font = SubResource("SystemFont_itdgf")
+
+[node name="ContentLabel" type="Label" parent="Panel"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 24.0
+offset_right = 275.0
+offset_bottom = 157.0
+autowrap_mode = 3
+
+[node name="ReadyButton" type="Button" parent="Panel"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.010000001
+anchor_top = 0.044000003
+anchor_right = 0.010000001
+anchor_bottom = 0.044000003
+offset_left = 24.0
+offset_top = 161.2
+offset_right = 54.0
+offset_bottom = 186.2
+
+[node name="ReadyStatusLabel" type="Label" parent="Panel"]
+layout_mode = 0
+offset_left = 212.0
+offset_top = 172.0
+offset_right = 242.0
+offset_bottom = 197.0

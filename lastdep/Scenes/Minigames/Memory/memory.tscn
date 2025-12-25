@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://cc2rngk7k7f8b"]
 
-[ext_resource type="Script" uid="uid://c7hbojk57vhuq" path="res://Scenes/Minigames/Memory/memory.gd" id="1_mhtmj"]
+[ext_resource type="Script" uid="uid://bcdf4j8cgu4nc" path="res://Scenes/Minigames/Memory/memory.gd" id="1_mhtmj"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_fx0hl"]
 

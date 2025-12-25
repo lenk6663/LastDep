@@ -7,6 +7,29 @@ var current_minigame = null
 var minigame_active = false
 var battleship_minigame_active = false
 
+# В Game.gd в функции add_minigame_triggers() замените на:
+func add_minigame_triggers():
+	# Создаем NPC для Memory игры
+	create_npc("memory", Vector2(-100, -50))
+	
+	# Создаем NPC для Battleship игры
+	create_npc("shooting", Vector2(105, -35))
+	
+	# Создаем NPC для Shooting игры
+	create_npc("battleship", Vector2(250, -50))
+
+func create_npc(minigame_type: String, position: Vector2):
+	var npc_scene = preload("res://Scenes/Main/NPC.tscn")
+	var npc = npc_scene.instantiate()
+	
+	npc.position = position
+	npc.npc_name = "Ведущий " + minigame_type
+	npc.minigame_type = minigame_type
+	# УБИРАЕМ dialogue_data! Диалог будет использовать свой текст
+	
+	add_child(npc)
+	print("NPC для " + minigame_type + " создан на позиции:", position)
+
 func _ready():
 	print("=== ИГРА ЗАПУЩЕНА ===")
 	print("Мой peer_id:", multiplayer.get_unique_id())
@@ -33,6 +56,8 @@ func _ready():
 		
 		var host_spawn_pos = NetworkingManager.get_spawn_position(1)
 		create_player(1, host_spawn_pos)
+		
+	add_minigame_triggers()
 
 func create_player(peer_id: int, position: Vector2):
 	print("Создание игрока:", peer_id, " в позиции:", position)
@@ -74,7 +99,7 @@ func start_memory_minigame():
 		player.set_process(false)
 		player.set_physics_process(false)
 	
-	var memory_scene = preload("res://Scenes/MiniGames/Memory/Memory.tscn")
+	var memory_scene = preload("res://Scenes/Minigames/Memory/memory.tscn")
 	if not memory_scene:
 		print("ОШИБКА: Не могу загрузить сцену Memory!")
 		return
@@ -268,3 +293,4 @@ func _on_shooting_game_over():
 		player.visible = true
 	
 	print("Возврат в основную игру завершен")
+	
