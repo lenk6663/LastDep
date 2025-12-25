@@ -8,9 +8,9 @@
 [ext_resource type="Texture2D" uid="uid://m5cbltj1alln" path="res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Maple Tree.png" id="5_yhmtn"]
 [ext_resource type="Texture2D" uid="uid://y3giocwo6hp0" path="res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Road copiar.png" id="6_gwjdr"]
 [ext_resource type="Texture2D" uid="uid://cigccn83euljt" path="res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Spring Crops.png" id="7_lvtmh"]
-[ext_resource type="Script" uid="uid://dviexsfgmp7fe" path="res://Scenes/Main/MinigameTrigger.gd" id="9_dyb2d"]
-[ext_resource type="Script" uid="uid://dd8t4if5h3p1f" path="res://Scenes/Main/BattleshipTrigger.gd" id="10_27pm6"]
-[ext_resource type="Script" uid="uid://dy7l36k15sdx8" path="res://Scenes/Main/ShootingTrigger.gd" id="11_u2n30"]
+[ext_resource type="Script" path="res://Scenes/Main/MinigameTrigger.gd" id="9_dyb2d"]
+[ext_resource type="Script" path="res://Scenes/Main/BattleshipTrigger.gd" id="10_27pm6"]
+[ext_resource type="Script" path="res://Scenes/Main/ShootingTrigger.gd" id="11_u2n30"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_yyih5"]
 texture = ExtResource("1_3mrqo")
