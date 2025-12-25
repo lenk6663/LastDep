@@ -2,6 +2,8 @@
 extends Node2D
 
 @onready var players_container: Node = $PlayersContainer
+@onready var background_music = get_node("/root/BackgroundMusic")
+
 const PLAYER_SCENE = preload("res://Player/Player.tscn")
 var current_minigame = null
 var minigame_active = false
@@ -11,6 +13,11 @@ func _ready():
 	print("=== ИГРА ЗАПУЩЕНА ===")
 	print("Мой peer_id:", multiplayer.get_unique_id())
 	print("Это сервер?", multiplayer.is_server())
+	
+	# Включаем игровую музыку (трек 0)
+	if background_music:
+		background_music.start_game_music()
+		print("Включена игровая музыка (трек 0)")
 	
 	var my_spawn_pos = NetworkingManager.get_spawn_position(multiplayer.get_unique_id())
 	print("Моя позиция спавна:", my_spawn_pos)
@@ -60,12 +67,21 @@ func remove_player(peer_id: int):
 
 func _exit_tree():
 	print("=== ИГРА ЗАВЕРШЕНА ===")
+	# При выходе из игры возвращаемся к музыке меню
+	if background_music:
+		background_music.back_to_menu()
+		print("Возврат к музыке меню")
 	
 func start_memory_minigame():
 	print("=")
 	print("GAME.GD: ЗАПУСК МИНИ-ИГРЫ")
 	print("=")
 	
+	# Меняем музыку на трек 2 для Memory
+	if background_music:
+		background_music.play_game_2()
+		print("Включена музыка для Memory (трек 2)")
+		
 	visible = false
 	players_container.visible = false
 	
@@ -107,6 +123,11 @@ func _on_memory_game_over():
 	print("Время: ", Time.get_time_string_from_system())
 	print("=")
 	
+	# Возвращаем музыку к треку 0 (основная игровая)
+	if background_music:
+		background_music.play_game_0()
+		print("Возвращена основная игровая музыка (трек 0)")
+	
 	if current_minigame and is_instance_valid(current_minigame):
 		print("Удаляю мини-игру...")
 		current_minigame.queue_free()
@@ -132,6 +153,10 @@ func return_to_game():
 func end_minigame():
 	minigame_active = false
 	
+		# Принудительный возврат музыки
+	if background_music:
+		background_music.play_game_0()
+		
 	if current_minigame:
 		current_minigame.queue_free()
 		current_minigame = null
@@ -150,6 +175,11 @@ func start_battleship_minigame():
 	print("=")
 	print("GAME.GD: ЗАПУСК МИНИ-ИГРЫ 'ПОИСК ФЕЙВЕРКОВ'")
 	print("=")
+	
+	# Меняем музыку на трек 1 для Battleship
+	if background_music:
+		background_music.play_game_1()
+		print("Включена музыка для Battleship (трек 1)")
 	
 	visible = false
 	players_container.visible = false
@@ -192,6 +222,11 @@ func _on_battleship_game_over():
 	print("GAME.GD: _on_battleship_game_over ВЫЗВАНА")
 	print("=")
 	
+	# Возвращаем музыку к треку 0 (основная игровая)
+	if background_music:
+		background_music.play_game_0()
+		print("Возвращена основная игровая музыка (трек 0)")
+	
 	if current_minigame and is_instance_valid(current_minigame):
 		print("Удаляю мини-игру 'Поиск фейверков'...")
 		current_minigame.queue_free()
@@ -214,6 +249,11 @@ func start_shooting_minigame():
 	print("Текущая сцена:", get_tree().current_scene.name)
 	print("Мой ID:", multiplayer.get_unique_id())
 	print("=")
+	
+	# Меняем музыку на трек 3 для Shooting
+	if background_music:
+		background_music.play_game_3()
+		print("Включена музыка для Shooting (трек 3)")
 	
 	visible = false
 	if players_container:
@@ -252,6 +292,11 @@ func _on_shooting_game_over():
 	print("=")
 	print("GAME.GD: ВОЗВРАТ ИЗ СТРЕЛЬБЫ")
 	print("=")
+
+	# Возвращаем музыку к треку 0 (основная игровая)
+	if background_music:
+		background_music.play_game_0()
+		print("Возвращена основная игровая музыка (трек 0)")
 	
 	if current_minigame and is_instance_valid(current_minigame):
 		current_minigame.queue_free()

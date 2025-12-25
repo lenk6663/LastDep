@@ -8,14 +8,19 @@ extends Control
 @onready var my_ip_input: LineEdit = $Panel/VBoxContainer/MyIPContainer/MyIPInput
 @onready var copy_my_ip_button: Button = $Panel/VBoxContainer/MyIPContainer/CopyMyIPButton
 @onready var exit_button: Button = $Panel/VBoxContainer/ExitButton
+@onready var background_music = get_node("/root/BackgroundMusic") if get_tree().root.has_node("/root/BackgroundMusic") else null
 
 # Добавляем загрузку сцены лобби
-const LOBBY_SCENE = preload("res://Scenes/Main/lobby/lobby.tscn")  # Укажите правильный путь
+const LOBBY_SCENE = preload("res://Scenes/Main/lobby/lobby.tscn") 
 
 func _ready():
 	add_to_group("menu")
 	print("Меню загружено")
 	
+	if background_music:
+		background_music.back_to_menu()
+		print("Музыка меню включена")
+		
 	# Начальное состояние
 	ip_panel.visible = false
 	
