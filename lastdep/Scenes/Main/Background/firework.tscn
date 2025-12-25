@@ -1,0 +1,63 @@
+[gd_scene load_steps=14 format=3 uid="uid://cemb3bofke6q4"]
+
+[ext_resource type="Texture2D" uid="uid://cp0hd5pyff2ay" path="res://Assets/background/firework/1.png" id="1_sp2kg"]
+[ext_resource type="Script" uid="uid://bsa12qvdurwmq" path="res://Scenes/Main/Background/firework.gd" id="1_uf63g"]
+[ext_resource type="Texture2D" uid="uid://dmcv3nrmpdcql" path="res://Assets/background/firework/2.png" id="2_c3y4g"]
+[ext_resource type="Texture2D" uid="uid://ca3m44rxu76aq" path="res://Assets/background/firework/3.png" id="3_lcsdd"]
+[ext_resource type="Texture2D" uid="uid://mi0wjq7v3lft" path="res://Assets/background/firework/4.png" id="4_v86d2"]
+[ext_resource type="Texture2D" uid="uid://bdol4wx7ntcmp" path="res://Assets/background/firework/5.png" id="5_rk1vc"]
+[ext_resource type="Texture2D" uid="uid://c05gl3xf8aabo" path="res://Assets/background/firework/6.png" id="6_niwck"]
+[ext_resource type="Texture2D" uid="uid://c8v3m8ofielyh" path="res://Assets/background/firework/7.png" id="7_7ky04"]
+[ext_resource type="Texture2D" uid="uid://dh5puhys28e84" path="res://Assets/background/firework/8.png" id="8_3u3wx"]
+[ext_resource type="Texture2D" uid="uid://8ykaqb6sif0d" path="res://Assets/background/firework/9.png" id="9_0xdbo"]
+[ext_resource type="Texture2D" uid="uid://dawbvrylej4jq" path="res://Assets/background/firework/10.png" id="10_tn5uf"]
+[ext_resource type="Texture2D" uid="uid://clgeks6h3p0cx" path="res://Assets/background/firework/11.png" id="11_pjmi1"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ghlgm"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_sp2kg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_c3y4g")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_lcsdd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_v86d2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_rk1vc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_niwck")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_7ky04")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_3u3wx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_0xdbo")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_tn5uf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_pjmi1")
+}],
+"loop": false,
+"name": &"default",
+"speed": 10.0
+}]
+
+[node name="Firework" type="AnimatedSprite2D"]
+position = Vector2(322.89285, 322.89285)
+scale = Vector2(15.855357, 15.855357)
+sprite_frames = SubResource("SpriteFrames_ghlgm")
+frame = 10
+frame_progress = 1.0
+script = ExtResource("1_uf63g")
