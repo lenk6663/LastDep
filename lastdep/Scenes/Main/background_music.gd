@@ -28,15 +28,43 @@ var game_tracks = {
 var current_game_track: GameMusic = GameMusic.GAME_0
 var is_in_game: bool = false
 
+# background_music.gd - обновите _ready() функцию
 func _ready():
-	# Настройки
-	volume_db = -5
+	# НЕ устанавливаем громкость здесь
 	autoplay = true
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	bus = "Music"
 	
+	# Загружаем сохраненную громкость из настроек
+	_load_volume_from_settings()
+	
 	# Всегда начинаем с музыки меню
 	play_menu_music("menu")
+
+func _load_volume_from_settings():
+	var config = ConfigFile.new()
+	if config.load("user://settings.cfg") == OK:
+		# Загружаем сохраненную громкость
+		var music_volume = config.get_value("audio", "music_volume", 0.3)  # 0.3 по умолчанию
+		print("Загружена громкость из настроек:", music_volume)
+		
+		# Применяем громкость через AudioBus
+		_apply_volume_to_bus(music_volume)
+	else:
+		# Настройки по умолчанию если файла нет
+		print("Использую громкость по умолчанию: 0.3")
+		_apply_volume_to_bus(0.3)
+
+func _apply_volume_to_bus(volume: float):
+	var bus_idx = AudioServer.get_bus_index("Music")
+	if bus_idx != -1:
+		var db_value = linear_to_db(volume)
+		AudioServer.set_bus_volume_db(bus_idx, db_value)
+		print("Установлена громкость шины Music:", db_value, "dB (", volume, ")")
+	else:
+		# Если шины нет, устанавливаем напрямую
+		volume_db = linear_to_db(volume)
+		print("Шина Music не найдена, установлена прямая громкость:", volume_db, "dB")
 
 # ================== МЕНЮ МУЗЫКА ==================
 
