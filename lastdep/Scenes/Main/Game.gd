@@ -115,6 +115,8 @@ func start_memory_minigame():
 		background_music.play_game_2()
 		print("Включена музыка для Memory (трек 2)")
 		
+	# И сервер, и клиент ДОЛЖНЫ создавать свою копию игры
+	# Скрываем основную игру
 	visible = false
 	if players_container:
 		players_container.visible = false
