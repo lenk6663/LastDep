@@ -20,6 +20,11 @@ config/icon="res://icon.svg"
 NetworkingManager="*res://Scenes/Main/NetworkingManager.gd"
 BackgroundMusic="*res://Scenes/Main/background_music.gd"
 
+[gui]
+
+theme/default_font_antialiasing=0
+theme/custom_font="uid://bpcwr1rfamd22"
+
 [input]
 
 ui_left={
