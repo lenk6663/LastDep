@@ -394,8 +394,9 @@ script = ExtResource("1_q3lat")
 position = Vector2(-0.7282473, -3.4807923)
 scale = Vector2(0.7274228, 0.7274224)
 sprite_frames = SubResource("SpriteFrames_3mea3")
-animation = &"IDLE_FRONT2"
+animation = &"IDLE_SIDE2"
 autoplay = "IDLE_FRONT"
+frame_progress = 0.698887
 flip_h = true
 
 [node name="Camera2D" type="Camera2D" parent="."]

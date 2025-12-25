@@ -161,7 +161,12 @@ func _return_to_menu():
 	else:
 		# Если меню не найдено в группах, ищем по типу
 		for child in get_tree().root.get_children():
-			if child.is_in_group("menu") or child.filename.contains("menu"):
+			# Проверяем наличие свойства filename перед доступом к нему
+			if child.is_in_group("menu"):
+				child.show_menu()
+				break
+			elif child.has_method("show_menu"):
+				# Если узел имеет метод show_menu, это вероятно меню
 				child.show_menu()
 				break
 	
