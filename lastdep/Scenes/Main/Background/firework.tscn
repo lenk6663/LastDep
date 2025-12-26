@@ -1,7 +1,7 @@
 [gd_scene load_steps=14 format=3 uid="uid://cemb3bofke6q4"]
 
 [ext_resource type="Texture2D" uid="uid://cp0hd5pyff2ay" path="res://Assets/background/firework/1.png" id="1_sp2kg"]
-[ext_resource type="Script" uid="uid://bsa12qvdurwmq" path="res://Scenes/Main/Background/firework.gd" id="1_uf63g"]
+[ext_resource type="Script" uid="uid://ctmlrtaifb3nt" path="res://Scenes/Main/Background/firework.gd" id="1_uf63g"]
 [ext_resource type="Texture2D" uid="uid://dmcv3nrmpdcql" path="res://Assets/background/firework/2.png" id="2_c3y4g"]
 [ext_resource type="Texture2D" uid="uid://ca3m44rxu76aq" path="res://Assets/background/firework/3.png" id="3_lcsdd"]
 [ext_resource type="Texture2D" uid="uid://mi0wjq7v3lft" path="res://Assets/background/firework/4.png" id="4_v86d2"]
