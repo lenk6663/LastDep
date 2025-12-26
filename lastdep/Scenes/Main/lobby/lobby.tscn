@@ -1,6 +1,10 @@
-[gd_scene load_steps=2 format=3 uid="uid://blyyvf7ag18aa"]
+[gd_scene load_steps=4 format=3 uid="uid://blyyvf7ag18aa"]
 
-[ext_resource type="Script" uid="uid://dj4gwx201ad85" path="res://Scenes/Main/lobby/lobby.gd" id="1_6ev6a"]
+[ext_resource type="Script" uid="uid://dr0vusayn867i" path="res://Scenes/Main/lobby/lobby.gd" id="1_6ev6a"]
+[ext_resource type="FontFile" uid="uid://bpcwr1rfamd22" path="res://Assets/8bitoperator_jve.ttf" id="2_6aade"]
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_hdebu"]
+load_path = "res://.godot/imported/Screenshot_7.png-1ca0c8f3f2bfbfd45f88410240d63061.ctex"
 
 [node name="Lobby" type="Control"]
 layout_mode = 3
@@ -11,30 +15,64 @@ offset_right = 490.0
 offset_bottom = 174.0
 script = ExtResource("1_6ev6a")
 
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = -170.0
+offset_top = -62.0
+offset_right = 344.0
+offset_bottom = 438.0
+
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_left = -138.0
+offset_top = 42.0
+offset_right = 310.0
+offset_bottom = 362.0
 
 [node name="TitleLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
+theme_override_fonts/font = ExtResource("2_6aade")
+theme_override_font_sizes/font_size = 40
 text = "ЛОББИ"
+horizontal_alignment = 1
 
 [node name="StatusLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 30
 text = "Ожидание..."
+horizontal_alignment = 1
 
 [node name="IPLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 20
 text = "IP: "
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+size_flags_vertical = 3
+alignment = 1
+
+[node name="Button2" type="Button" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "<"
+
+[node name="TextureRect" type="TextureRect" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+texture = SubResource("CompressedTexture2D_hdebu")
+expand_mode = 2
+stretch_mode = 5
+
+[node name="Button" type="Button" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = ">"
 
 [node name="CancelButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 30
 text = "Отмена"
 
 [node name="StartButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
-
-[node name="BackButton" type="Button" parent="VBoxContainer"]
-layout_mode = 2
-text = "В меню"
+theme_override_font_sizes/font_size = 30
