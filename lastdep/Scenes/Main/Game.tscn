@@ -1,10 +1,10 @@
 [gd_scene load_steps=27 format=4 uid="uid://bbiad1c0ejv4a"]
 
 [ext_resource type="Texture2D" uid="uid://lonvlpn44mbl" path="res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Tileset/Tileset Spring.png" id="1_3mrqo"]
-[ext_resource type="Script" uid="uid://cfd34pd8t80mp" path="res://Scenes/Main/Game.gd" id="1_dyb2d"]
+[ext_resource type="Script" uid="uid://yky2qbk7yrid" path="res://Scenes/Main/Game.gd" id="1_dyb2d"]
 [ext_resource type="Texture2D" uid="uid://cr1gbhg3ornn4" path="res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/House.png" id="2_joorw"]
 [ext_resource type="Texture2D" uid="uid://cwie36sfmiiwd" path="res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Fence's copiar.png" id="3_2vekm"]
-[ext_resource type="Texture2D" uid="uid://dd31tw13pf5yy" path="res://Assets/Minigames/Flag.png" id="4_2p31s"]
+[ext_resource type="Texture2D" uid="uid://bo2p36twu8jbk" path="res://Assets/Minigames/Flag.png" id="4_2p31s"]
 [ext_resource type="Texture2D" uid="uid://duwuknpcna8rn" path="res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Interior.png" id="4_yx171"]
 [ext_resource type="Texture2D" uid="uid://m5cbltj1alln" path="res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Maple Tree.png" id="5_yhmtn"]
 [ext_resource type="Texture2D" uid="uid://y3giocwo6hp0" path="res://Assets/Farm RPG FREE 16x16 - Tiny Asset Pack/Objects/Road copiar.png" id="6_gwjdr"]
