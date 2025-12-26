@@ -48,11 +48,8 @@ func _ready():
 		
 		var host_spawn_pos = NetworkingManager.get_spawn_position(1)
 		create_player(1, host_spawn_pos)
-		
+	
 	add_minigame_triggers()
-
-func _exit_tree():
-	print("=== ИГРА ЗАВЕРШЕНА ===")
 
 # ============== УПРАВЛЕНИЕ ИГРОКАМИ ==============
 func create_player(peer_id: int, position: Vector2):
@@ -82,16 +79,8 @@ func remove_player(peer_id: int):
 func add_minigame_triggers():
 	# Создаем NPC для Memory игры
 	create_npc("memory", Vector2(-100, -50))
-=======
-func _exit_tree():
-	print("=== ИГРА ЗАВЕРШЕНА ===")
-	# При выходе из игры возвращаемся к музыке меню
-	if background_music:
-		background_music.back_to_menu()
-		print("Возврат к музыке меню")	
 	# Создаем NPC для Shooting игры
 	create_npc("shooting", Vector2(105, -35))
-	
 	# Создаем NPC для Battleship игры
 	create_npc("battleship", Vector2(250, -50))
 
@@ -121,7 +110,7 @@ func start_memory_minigame():
 	if background_music:
 		background_music.play_game_2()
 		print("Включена музыка для Memory (трек 2)")
-		
+	
 	# И сервер, и клиент ДОЛЖНЫ создавать свою копию игры
 	# Скрываем основную игру
 	visible = false
@@ -166,6 +155,11 @@ func start_shooting_minigame():
 	print("Мой ID: ", multiplayer.get_unique_id())
 	print("=")
 	
+	# Меняем музыку на трек 3 для Shooting
+	if background_music:
+		background_music.play_game_3()
+		print("Включена музыка для Shooting (трек 3)")
+	
 	# Скрываем основную игру
 	visible = false
 	if players_container:
@@ -209,6 +203,11 @@ func start_battleship_minigame():
 	print("Мой ID: ", multiplayer.get_unique_id())
 	print("=")
 	
+	# Меняем музыку на трек 1 для Battleship
+	if background_music:
+		background_music.play_game_1()
+		print("Включена музыка для Battleship (трек 1)")
+	
 	# Скрываем основную игру
 	visible = false
 	if players_container:
@@ -245,28 +244,20 @@ func start_battleship_minigame():
 	minigame_active = true
 	print("Мини-игра Battleship добавлена (peer: ", multiplayer.get_unique_id(), ")")
 
-# ============== ФУНКЦИИ ВОЗВРАТА ИЗ МИНИ-ИГР ==============
+# ============== ФУНКЦИИ ЗАВЕРШЕНИЯ МИНИ-ИГР ==============
 func _on_memory_game_over():
 	print("=")
 	print("GAME.GD: _on_memory_game_over ВЫЗВАНА")
 	print("Время: ", Time.get_time_string_from_system())
 	print("=")
 	
-	if current_minigame and is_instance_valid(current_minigame):
-		print("Удаляю мини-игру Memory...")
-		current_minigame.queue_free()
-		current_minigame = null
-	
-	restore_main_game()
-
-func _on_shooting_game_over():
-	print("=")
-	print("GAME.GD: _on_shooting_game_over ВЫЗВАНА")
-	print("Время: ", Time.get_time_string_from_system())
-	print("=")
+	# Возвращаем музыку к треку 0 (основная игровая)
+	if background_music:
+		background_music.play_game_0()
+		print("Возвращена основная игровая музыка (трек 0)")
 	
 	if current_minigame and is_instance_valid(current_minigame):
-		print("Удаляю мини-игру Shooting...")
+		print("Удаляю мини-игру...")
 		current_minigame.queue_free()
 		current_minigame = null
 	
@@ -278,8 +269,31 @@ func _on_battleship_game_over():
 	print("Время: ", Time.get_time_string_from_system())
 	print("=")
 	
+	# Возвращаем музыку к треку 0 (основная игровая)
+	if background_music:
+		background_music.play_game_0()
+		print("Возвращена основная игровая музыка (трек 0)")
+	
 	if current_minigame and is_instance_valid(current_minigame):
-		print("Удаляю мини-игру Battleship...")
+		print("Удаляю мини-игру 'Поиск фейверков'...")
+		current_minigame.queue_free()
+		current_minigame = null
+	
+	restore_main_game()
+
+func _on_shooting_game_over():
+	print("=")
+	print("GAME.GD: _on_shooting_game_over ВЫЗВАНА")
+	print("Время: ", Time.get_time_string_from_system())
+	print("=")
+	
+	# Возвращаем музыку к треку 0 (основная игровая)
+	if background_music:
+		background_music.play_game_0()
+		print("Возвращена основная игровая музыка (трек 0)")
+	
+	if current_minigame and is_instance_valid(current_minigame):
+		print("Удаляю мини-игру...")
 		current_minigame.queue_free()
 		current_minigame = null
 	
@@ -298,13 +312,18 @@ func restore_main_game():
 	set_physics_process(true)
 	
 	# Возобновляем игроков
-	for player in players_container.get_children():
-		player.set_process(true)
-		player.set_physics_process(true)
-		player.visible = true
+	if players_container:
+		for player in players_container.get_children():
+			player.set_process(true)
+			player.set_physics_process(true)
+			player.visible = true
 	
 	minigame_active = false
 	print("Основная игра восстановлена")
+
+func return_to_game():
+	print("Аварийный возврат в игру")
+	restore_main_game()
 
 # ============== RPC СИНХРОНИЗАЦИЯ ==============
 @rpc("authority", "call_local", "reliable")
@@ -330,17 +349,6 @@ func end_minigame_on_client():
 	print("КЛИЕНТ: получаю команду завершить мини-игру")
 	restore_main_game()
 
-# ============== ОБРАБОТКА ВВОДА ==============
-func _input(event):
-	if event.is_action_pressed("ui_cancel") and minigame_active:
-		print("Аварийный выход из мини-игры")
-		
-		if multiplayer.is_server():
-			end_minigame_on_client.rpc()
-		
-		restore_main_game()
-
-# ============== ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ==============
 @rpc("authority", "call_remote", "reliable")
 func sync_memory_game_state(is_active: bool, current_player: int, game_data: Array):
 	if not multiplayer.is_server():
@@ -364,43 +372,11 @@ func sync_memory_game_state(is_active: bool, current_player: int, game_data: Arr
 		if current_minigame and current_minigame.has_method("update_game_state"):
 			current_minigame.update_game_state(is_active, current_player, game_data)
 
-func _on_memory_game_over():
-	print("=")
-	print("GAME.GD: _on_memory_game_over ВЫЗВАНА")
-	print("Время: ", Time.get_time_string_from_system())
-	print("=")
-	
-	# Возвращаем музыку к треку 0 (основная игровая)
-	if background_music:
-		background_music.play_game_0()
-		print("Возвращена основная игровая музыка (трек 0)")
-	
-	if current_minigame and is_instance_valid(current_minigame):
-		print("Удаляю мини-игру...")
-		current_minigame.queue_free()
-		current_minigame = null
-	
-	visible = true
-	players_container.visible = true
-	set_process(true)
-	
-	for player in players_container.get_children():
-		player.set_process(true)
-		player.set_physics_process(true)
-		player.visible = true
-	
-	print("ВОЗВРАТ В ОСНОВНУЮ ИГРУ ЗАВЕРШЕН")
-
-func return_to_game():
-	print("Аварийный возврат в игру")
-	_on_memory_game_over()
-
-
 @rpc("authority", "call_remote", "reliable")
 func end_minigame():
 	minigame_active = false
 	
-		# Принудительный возврат музыки
+	# Принудительный возврат музыки
 	if background_music:
 		background_music.play_game_0()
 		
@@ -408,158 +384,13 @@ func end_minigame():
 		current_minigame.queue_free()
 		current_minigame = null
 	
-	players_container.visible = true
-	
-	for player in players_container.get_children():
-		player.set_process(true)
-		player.set_physics_process(true)
-
-func _input(event):
-	if event.is_action_pressed("ui_cancel") and minigame_active:
-		end_minigame.rpc_id(1) 
-		
-func start_battleship_minigame():
-	print("=")
-	print("GAME.GD: ЗАПУСК МИНИ-ИГРЫ 'ПОИСК ФЕЙВЕРКОВ'")
-	print("=")
-	
-	# Меняем музыку на трек 1 для Battleship
-	if background_music:
-		background_music.play_game_1()
-		print("Включена музыка для Battleship (трек 1)")
-	
-	visible = false
-	players_container.visible = false
-	
-	set_process(false)
-	for player in players_container.get_children():
-		player.set_process(false)
-		player.set_physics_process(false)
-	
-	var battleship_scene = preload("res://Scenes/Minigames/Battleship/Battleship.tscn")
-	if not battleship_scene:
-		print("ОШИБКА: Не могу загрузить сцену Battleship!")
-		return
-	
-	var game = battleship_scene.instantiate()
-	game.name = "BattleshipGame"
-	
-	print("Подключаю сигнал game_over...")
-	
-	if game.has_signal("game_over"):
-		game.game_over.connect(func(): 
-			print("!!! СИГНАЛ game_over ПОЛУЧЕН В GAME.GD !!!")
-			_on_battleship_game_over()
-		)
-		print("Сигнал подключен")
-	else:
-		print("ОШИБКА: Сигнал game_over не найден в мини-игре!")
-		get_tree().create_timer(300.0).timeout.connect(
-			func(): 
-				print("АВТО-ВОЗВРАТ по таймауту")
-				_on_battleship_game_over()
-		)
-	
-	add_child(game)
-	current_minigame = game
-	print("Мини-игра 'Поиск фейверков' добавлена")
-
-func _on_battleship_game_over():
-	print("=")
-	print("GAME.GD: _on_battleship_game_over ВЫЗВАНА")
-	print("=")
-	
-	# Возвращаем музыку к треку 0 (основная игровая)
-	if background_music:
-		background_music.play_game_0()
-		print("Возвращена основная игровая музыка (трек 0)")
-	
-	if current_minigame and is_instance_valid(current_minigame):
-		print("Удаляю мини-игру 'Поиск фейверков'...")
-		current_minigame.queue_free()
-		current_minigame = null
-	
-	visible = true
-	players_container.visible = true
-	set_process(true)
-	
-	for player in players_container.get_children():
-		player.set_process(true)
-		player.set_physics_process(true)
-		player.visible = true
-	
-	print("ВОЗВРАТ В ОСНОВНУЮ ИГРУ ЗАВЕРШЕН")
-	
-func start_shooting_minigame():
-	print("=")
-	print("GAME.GD: ЗАПУСК СТРЕЛЬБЫ")
-	print("Текущая сцена:", get_tree().current_scene.name)
-	print("Мой ID:", multiplayer.get_unique_id())
-	print("=")
-	
-	# Меняем музыку на трек 3 для Shooting
-	if background_music:
-		background_music.play_game_3()
-		print("Включена музыка для Shooting (трек 3)")
-	
-	visible = false
-	if players_container:
-		players_container.visible = false
-	set_process(false)
-	
-	for player in players_container.get_children():
-		player.set_process(false)
-		player.set_physics_process(false)
-	
-	var shooting_scene_path = "res://Scenes/Minigames/Shooting/Shooting.tscn"
-	print("Пробую загрузить:", shooting_scene_path)
-	
-	if ResourceLoader.exists(shooting_scene_path):
-		var shooting_scene = load(shooting_scene_path)
-		var game_instance = shooting_scene.instantiate()
-		game_instance.name = "ShootingGame"
-		
-		if game_instance.has_signal("game_over"):
-			game_instance.game_over.connect(_on_shooting_game_over)
-			print("Сигнал game_over подключен")
-		else:
-			print("ВНИМАНИЕ: Сигнал game_over не найден!")
-			# Создаем таймер для авто-возврата
-			var timer = get_tree().create_timer(60.0)
-			timer.timeout.connect(_on_shooting_game_over)
-		
-		add_child(game_instance)
-		current_minigame = game_instance
-		print("Мини-игра добавлена успешно!")
-	else:
-		print("ОШИБКА: Не могу найти файл сцены!")
-		_on_shooting_game_over()
-
-func _on_shooting_game_over():
-	print("=")
-	print("GAME.GD: ВОЗВРАТ ИЗ СТРЕЛЬБЫ")
-	print("=")
-
-	# Возвращаем музыку к треку 0 (основная игровая)
-	if background_music:
-		background_music.play_game_0()
-		print("Возвращена основная игровая музыка (трек 0)")
-	
-	if current_minigame and is_instance_valid(current_minigame):
-		current_minigame.queue_free()
-		current_minigame = null
-	
-	visible = true
 	if players_container:
 		players_container.visible = true
-	set_process(true)
 	
-	for player in players_container.get_children():
-		player.set_process(true)
-		player.set_physics_process(true)
-		player.visible = true
-	
-	print("Возврат в основную игру завершен")
+	if players_container:
+		for player in players_container.get_children():
+			player.set_process(true)
+			player.set_physics_process(true)
 
 @rpc("authority", "call_remote", "reliable")
 func sync_minigame_start(minigame_type: String, players: Array):
@@ -573,6 +404,7 @@ func sync_minigame_start(minigame_type: String, players: Array):
 		"shooting":
 			start_shooting_minigame()
 
+# ============== ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ==============
 func queue_minigame_start(minigame_type: String, players: Array):
 	if multiplayer.is_server():
 		print("СЕРВЕР: Ставлю в очередь мини-игру ", minigame_type)
@@ -586,3 +418,21 @@ func queue_minigame_start(minigame_type: String, players: Array):
 				start_battleship_minigame()
 			"shooting":
 				start_shooting_minigame()
+
+# ============== ОБРАБОТКА ВВОДА ==============
+func _input(event):
+	if event.is_action_pressed("ui_cancel") and minigame_active:
+		print("Аварийный выход из мини-игры")
+		
+		if multiplayer.is_server():
+			end_minigame_on_client.rpc()
+		
+		restore_main_game()
+
+# ============== ЗАВЕРШЕНИЕ ИГРЫ ==============
+func _exit_tree():
+	print("=== ИГРА ЗАВЕРШЕНА ===")
+	# При выходе из игры возвращаемся к музыке меню
+	if background_music:
+		background_music.back_to_menu()
+		print("Возврат к музыке меню")
