@@ -1,11 +1,12 @@
 # NetworkingManager.gd
 extends Node
 
-const PORT = 9999
-
+# Текущий порт - публичная переменная
+var current_port: int = 9999
 var multiplayer_peer: ENetMultiplayerPeer = ENetMultiplayerPeer.new()
 var connected_peer_ids = []
 var should_create_players = false 
+
 # Единый массив позиций спавна
 var spawn_positions = [
 	Vector2(0, 0),   # Хост (peer_id=1)
@@ -19,10 +20,15 @@ func _ready():
 	multiplayer.connected_to_server.connect(_on_connected_to_server)
 	multiplayer.connection_failed.connect(_on_connection_failed)
 
-func create_host() -> bool:
-	print("Создание хоста на порту", PORT)
+# Просто используем константу для обратной совместимости
+const DEFAULT_PORT = 9999
+
+# Изменяем функцию create_host для приема порта
+func create_host(port: int = DEFAULT_PORT) -> bool:
+	current_port = port
+	print("Создание хоста на порту", current_port)
 	
-	var err = multiplayer_peer.create_server(PORT)
+	var err = multiplayer_peer.create_server(current_port)
 	if err != OK:
 		print("Ошибка создания сервера:", error_string(err))
 		return false
@@ -31,28 +37,31 @@ func create_host() -> bool:
 	
 	# Хост всегда имеет peer_id = 1
 	connected_peer_ids = [1]
-	print("Хост создан. Peer ID:", multiplayer.get_unique_id())
+	print("Хост создан. Peer ID:", multiplayer.get_unique_id(), "Порт:", current_port)
 	return true
 
-func connect_to_host(ip_address: String) -> bool:
-	print("Подключение к:", ip_address)
+# Изменяем функцию connect_to_host для приема порта
+func connect_to_host(ip_address: String, port: int = DEFAULT_PORT) -> bool:
+	current_port = port
+	print("Подключение к:", ip_address, ":", current_port)
 	
-	# Убираем порт если он есть
-	var clean_ip = ip_address
-	if ":" in ip_address:
-		var parts = ip_address.split(":")
-		clean_ip = parts[0]
-	
-	print("Чистый IP:", clean_ip, "Порт:", PORT)
-	
-	var err = multiplayer_peer.create_client(clean_ip, PORT)
+	var err = multiplayer_peer.create_client(ip_address, current_port)
 	if err != OK:
 		print("Ошибка подключения:", error_string(err))
 		return false
 	
 	multiplayer.multiplayer_peer = multiplayer_peer
-	print("Подключение инициировано")
+	print("Подключение инициировано к", ip_address, ":", current_port)
 	return true
+
+# Простая функция для получения текущего порта
+func get_current_port() -> int:
+	return current_port
+
+# Для обратной совместимости с существующим кодом используем DEFAULT_PORT
+static var PORT: int = DEFAULT_PORT
+
+# Остальной код остается прежним...
 
 func _on_peer_connected(peer_id: int):
 	print("Игрок подключен:", peer_id)

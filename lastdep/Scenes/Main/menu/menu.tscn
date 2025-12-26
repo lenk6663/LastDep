@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://bcnk6qpn8xpf8"]
 
-[ext_resource type="Script" uid="uid://c3jqc036pu7fb" path="res://Scenes/Main/menu/menu.gd" id="1_lti8b"]
+[ext_resource type="Script" uid="uid://d3wycd33kpe3w" path="res://Scenes/Main/menu/menu.gd" id="1_lti8b"]
 [ext_resource type="PackedScene" uid="uid://cg6qfv76ursya" path="res://Scenes/Main/Background/background.tscn" id="2_ax2us"]
 
 [node name="Menu" type="Control"]
@@ -85,6 +85,16 @@ custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 theme_override_font_sizes/font_size = 25
 text = "ПОДКЛЮЧИТЬСЯ"
+
+[node name="PortContainer" type="PanelContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+
+[node name="PortLabel" type="Label" parent="Panel/VBoxContainer/PortContainer"]
+layout_mode = 2
+text = "Порт:"
+
+[node name="PortInput" type="LineEdit" parent="Panel/VBoxContainer/PortContainer"]
+layout_mode = 2
 
 [node name="MyIPContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
 layout_mode = 2

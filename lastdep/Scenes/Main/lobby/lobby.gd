@@ -51,8 +51,8 @@ func _ready():
 func _get_local_ip() -> String:
 	for ip in IP.get_local_addresses():
 		if ip.begins_with("192.168.") or ip.begins_with("10."):
-			return ip + ":" + str(NetworkingManager.PORT)
-	return "127.0.0.1:" + str(NetworkingManager.PORT)
+			return ip + ":" + str(NetworkingManager.current_port)
+	return "127.0.0.1:" + str(NetworkingManager.current_port)
 
 func _on_cancel_pressed():
 	_return_to_menu()
