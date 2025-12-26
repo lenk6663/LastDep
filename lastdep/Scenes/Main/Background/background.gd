@@ -3,23 +3,51 @@ extends CanvasLayer
 
 @export var show_fireworks: bool = true
 @export var firework_scene: PackedScene
+@export var dim_color: Color = Color(0, 0, 0, 0.3)  # Цвет затемнения
 
 var firework_spawner: Node
 
 func _ready():
-	# Настраиваем фон на весь экран
-	$Background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	$Background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	$Background.size = get_viewport().size
+	# Подписываемся на изменение размера окна
+	get_tree().root.size_changed.connect(_on_window_resized)
+	
+	# Первоначальная настройка
+	_update_all_sizes()
 	
 	# Если нужно - добавляем фейерверки
 	if show_fireworks and firework_scene:
 		_setup_fireworks()
 
+func _on_window_resized():
+	print("🔄 Размер окна изменился: ", get_viewport().size)
+	_update_all_sizes()
+	
+	# Обновляем спавнер фейерверков если он есть
+	if firework_spawner and firework_spawner.has_method("update_screen_size"):
+		firework_spawner.update_screen_size()
+
+func _update_all_sizes():
+	var viewport_size = get_viewport().get_visible_rect().size
+	
+	# Обновляем фон (TextureRect)
+	$Background.size = viewport_size
+	$Background.position = Vector2.ZERO
+	
+	# Обновляем ColorRect (затемнение/оверлей)
+	if has_node("ColorRect"):
+		$ColorRect.size = viewport_size
+		$ColorRect.position = Vector2.ZERO
+		$ColorRect.color = dim_color
+	
+	print("📐 Все элементы фона обновлены: ", viewport_size)
+
 func _setup_fireworks():
 	firework_spawner = Node2D.new()
 	firework_spawner.name = "FireworkSpawner"
-	$Background.add_child(firework_spawner)
+	
+	# Добавляем как дочерний к CanvasLayer
+	add_child(firework_spawner)
+	firework_spawner.z_index = 2  # Поверх ColorRect но под UI
 	
 	# Копируем скрипт спавнера
 	firework_spawner.set_script(load("res://Scenes/Main/menu/firework_spawner.gd"))
@@ -32,7 +60,21 @@ func _setup_fireworks():
 	firework_spawner.exclude_center_zone = true
 	firework_spawner.center_zone_size = Vector2(500, 350)
 
-# Переименованные функции (не используем show()/hide())
+# Для управления прозрачностью ColorRect
+func set_dim_strength(alpha: float):
+	if has_node("ColorRect"):
+		dim_color.a = alpha
+		$ColorRect.color = dim_color
+
+func set_dim_color(color: Color):
+	if has_node("ColorRect"):
+		dim_color = color
+		$ColorRect.color = dim_color
+
+func show_dim(show: bool = true):
+	if has_node("ColorRect"):
+		$ColorRect.visible = show
+		
 func show_background():
 	visible = true
 
