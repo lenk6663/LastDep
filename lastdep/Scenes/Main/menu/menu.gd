@@ -9,6 +9,8 @@ extends Control
 @onready var copy_my_ip_button: Button = $Panel/VBoxContainer/MyIPContainer/CopyMyIPButton
 @onready var exit_button: Button = $Panel/VBoxContainer/ExitButton
 @onready var settings_button: Button = $Panel/VBoxContainer/SettingsButton
+@onready var port_input: LineEdit = $Panel/VBoxContainer/PortContainer/PortInput
+@onready var port_panel: PanelContainer = $Panel/VBoxContainer/PortContainer
 @onready var background_music = get_node("/root/BackgroundMusic") if get_tree().root.has_node("/root/BackgroundMusic") else null
 
 # Добавляем загрузку сцен
@@ -35,7 +37,9 @@ func _ready():
 	copy_my_ip_button.pressed.connect(_on_copy_my_ip_pressed)
 	exit_button.pressed.connect(_on_exit_pressed)
 	settings_button.pressed.connect(_on_settings_pressed)
-
+	
+	port_input.text = str(NetworkingManager.PORT)
+	port_panel.visible = true
 func _setup_ip_fields():
 	# Заполняем поле "Подключиться к IP"
 	var connect_ip = _get_my_ip_for_connection()
@@ -70,14 +74,20 @@ func _get_my_ip_for_connection() -> String:
 func _get_my_ip_for_sharing() -> String:
 	for ip in IP.get_local_addresses():
 		if ip.begins_with("192.168."):
-			return ip + ":" + str(NetworkingManager.PORT)
+			return ip + ":" + str(port_input.text)
 		elif ip.begins_with("10."):
-			return ip + ":" + str(NetworkingManager.PORT)
-	return "127.0.0.1:" + str(NetworkingManager.PORT)
+			return ip + ":" + str(port_input.text)
+	return "127.0.0.1:" + str(port_input.text)
 
 func _on_create_pressed() -> void:
 	print("Создание игры...")
-	if NetworkingManager.create_host():
+	
+	# Получаем порт из поля ввода
+	var port = int(port_input.text)
+	if port <= 0 or port > 65535:
+		port = NetworkingManager.PORT  # Значение по умолчанию
+	
+	if NetworkingManager.create_host(port):
 		# Переходим в лобби как хост
 		_go_to_lobby("host")
 	else:
@@ -88,8 +98,21 @@ func _on_connect_pressed() -> void:
 	if ip.is_empty():
 		ip = connect_ip_input.placeholder_text
 	
-	print("Подключение к:", ip)
-	if NetworkingManager.connect_to_host(ip):
+	# Получаем порт
+	var port = int(port_input.text)
+	if port <= 0 or port > 65535:
+		port = NetworkingManager.PORT  # Значение по умолчанию
+	
+	print("Подключение к:", ip, ":", port)
+	
+	# Если IP содержит порт, разделяем их
+	var clean_ip = ip
+	if ":" in ip:
+		var parts = ip.split(":")
+		clean_ip = parts[0]
+		port = int(parts[1]) if parts[1].is_valid_int() else port
+	
+	if NetworkingManager.connect_to_host(clean_ip, port):
 		# Переходим в лобби как клиент
 		_go_to_lobby("client", ip)
 	else:
