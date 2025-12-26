@@ -7,7 +7,7 @@ extends Node2D
 @onready var anim_sprite = $AnimatedSprite2D
 @onready var interaction_area = $InteractionArea
 @onready var interaction_label = $InteractionLabel
-
+var is_game_completed: bool = false  # Флаг завершения игры
 var ready_players = []    # Синхронизируется через RPC
 var players_in_zone = []  # ID игроков в зоне
 var minigame_active = false
@@ -38,6 +38,16 @@ func _ready():
 func _on_body_entered(body):
 	print("[NPC DEBUG] Тело вошло в зону: ", body.name, " (Класс: ", body.get_class(), ")")
 	
+	# Если игра уже пройдена - не открываем диалог
+	if is_game_completed:
+		print("[NPC] Мини-игра уже пройдена!")
+		
+		# Показываем сообщение о завершении
+		if body.is_multiplayer_authority() and interaction_label:
+			interaction_label.text = "Игра пройдена!"
+			interaction_label.visible = false
+		return
+	print("[NPC DEBUG] Тело вошло в зону: ", body.name, " (Класс: ", body.get_class(), ")")
 	# Проверяем, что это игрок
 	if _is_player(body):
 		var player_id = int(body.name)
@@ -234,27 +244,22 @@ func update_all_dialogue_windows(players_list: Array):
 			dialog.call_deferred("set_ready_players", players_list.duplicate())
 		else:
 			print("[NPC UPDATE] Диалог невалиден или не имеет метода set_ready_players")
-@rpc("authority", "call_local", "reliable")  
+
 func start_game_countdown():
-	print("[NPC] Начинаем отсчет до начала игры")
+	print("[NPC] Оба игрока готовы!")
 	minigame_active = true
 	
 	# Обновляем все диалоговые окна
 	if dialogue_instance and is_instance_valid(dialogue_instance):
-		dialogue_instance.show_countdown()
-	
-	# 3 секунды отсчета
-	for i in range(3, 0, -1):
-		if interaction_label:
-			interaction_label.text = "Начинаем через %d..." % i
-		await get_tree().create_timer(1.0).timeout
+		# Диалог сам запустит отсчет через set_ready_players
+		pass
 	
 	if interaction_label:
-		interaction_label.text = "Старт!"
+		interaction_label.text = "Начинаем игру..."
 	
-	await get_tree().create_timer(0.5).timeout
+	# Ждем немного и запускаем игру
+	await get_tree().create_timer(1.0).timeout
 	
-	# ВМЕСТО прямого вызова мини-игры используем новую систему
 	launch_minigame()
 
 @rpc("authority", "call_local", "reliable")
@@ -279,9 +284,26 @@ func _on_dialogue_closed(player_name: String):
 	print("[NPC] Диалог закрыт игроком ", player_name)
 	dialogue_instance = null
 	
-# ЗАМЕНИТЬ существующую функцию launch_minigame на эту:
+
 func launch_minigame():
 	print("NPC: Запуск мини-игры типа: " + minigame_type)
+	
+	# Закрываем все открытые диалоги
+	if dialogue_instance and is_instance_valid(dialogue_instance):
+		dialogue_instance.queue_free()
+		dialogue_instance = null
+	
+	# Блокируем NPC после запуска игры
+	is_game_completed = true
+	
+	# Синхронизируем блокировку со всеми игроками
+	if multiplayer.is_server():
+		sync_game_completed.rpc()
+	
+	# Обновляем статус
+	if interaction_label:
+		interaction_label.text = "Игра завершена!"
+		interaction_label.visible = true
 	
 	# Закрываем все открытые диалоги
 	if dialogue_instance and is_instance_valid(dialogue_instance):
@@ -320,3 +342,11 @@ func request_minigame_start(game_type: String, players: Array):
 		var game = get_tree().current_scene
 		if game and game.has_method("queue_minigame_start"):
 			game.queue_minigame_start(game_type, players)
+			
+@rpc("authority", "call_remote", "reliable")
+func sync_game_completed():
+	is_game_completed = true
+	if interaction_label:
+		interaction_label.text = "Игра завершена!"
+		interaction_label.visible = false
+		

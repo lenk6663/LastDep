@@ -13,6 +13,7 @@ var target_ip: String = ""
 
 func _ready():
 	print("Лобби запущено в режиме:", mode)
+	print("Лобби находится на сцене:", get_tree().current_scene.name if get_tree().current_scene else "нет")
 	
 	# Настраиваем UI
 	if mode == "host":
@@ -67,53 +68,54 @@ func sync_player_list():
 	# Запоминаем что нужно создать игроков
 	NetworkingManager.should_create_players = true
 
-# В _on_start_pressed добавьте синхронизацию:
 func _on_start_pressed():
 	# Хост запускает игру для всех
 	if multiplayer.is_server():
 		print("Хост запускает игру...")
+		print("Текущая сцена перед запуском:", get_tree().current_scene.name if get_tree().current_scene else "нет")
 		
 		# Сначала синхронизируем список игроков
 		sync_player_list.rpc()
 		sync_player_list()  # И локально
 		
-		# Ждем немного
-		await get_tree().create_timer(0.1).timeout
+		# Ждем немного для синхронизации
+		await get_tree().create_timer(0.2).timeout
 		
-		# Затем запускаем игру
-		_start_game_local()
+		print("Загружаем игру у хоста...")
+		# Запускаем игру у хоста (локально) - ОБЯЗАТЕЛЬНО перед отправкой клиентам
+		_load_game_scene()
 		
 		# Потом отправляем команду клиентам
+		print("Отправляем команду клиентам начать игру")
 		start_game.rpc()
 	else:
 		print("Только хост может начать игру")
 
-
-# В lobby.gd в функции start_game/rpc:
 @rpc("authority", "call_remote", "reliable")
 func start_game():
 	print("Клиент получает команду начать игру")
+	print("Клиент: Текущая сцена перед загрузкой:", get_tree().current_scene.name if get_tree().current_scene else "нет")
 	
 	# Ждем немного чтобы сервер успел обработать
-	await get_tree().create_timer(0.1).timeout
+	await get_tree().create_timer(0.2).timeout
 	
-	# Загружаем игровой мир
-	var game_scene = load("res://Scenes/Main/Game.tscn")
-	if game_scene:
-		get_tree().change_scene_to_packed(game_scene)
-	else:
-		print("Ошибка: не удалось загрузить игровую сцену")
+	# Загружаем игровой мир у клиента
+	_load_game_scene()
 
-func _start_game_local():
-	print("Локальный запуск игры...")
+func _load_game_scene():
+	print("Загрузка игровой сцены...")
+	print("Режим:", "Хост" if multiplayer.is_server() else "Клиент")
 	
-	# Ждем немного
-	await get_tree().create_timer(0.1).timeout
+	# Скрываем лобби (и у хоста, и у клиентов)
+	self.visible = false
+	self.queue_free()  # Помечаем на удаление сразу
 	
 	# Загружаем игровой мир
 	var game_scene = load("res://Scenes/Main/Game.tscn")
 	if game_scene:
+		print("Игровая сцена загружена, меняем сцену...")
 		get_tree().change_scene_to_packed(game_scene)
+		print("Смена сцены завершена")
 	else:
 		print("Ошибка: не удалось загрузить игровую сцену")
 		_return_to_menu()

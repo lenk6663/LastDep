@@ -13,41 +13,63 @@ var cart_player_id := 1  # ID игрока в вагонетке (1 или 2)
 func _ready():
 	print("Игрок создан:", name, " Authority:", is_multiplayer_authority())
 	
-	# Проверяем мета-данные: находимся ли мы в вагонетке
+	# Проверяем, находимся ли мы в вагонетке (сначала по метаданным)
 	if has_meta("in_cart"):
 		is_in_cart = get_meta("in_cart")
 		if has_meta("cart_player_id"):
 			cart_player_id = get_meta("cart_player_id")
+			print("Игрок в вагонетке по метаданным, ID:", cart_player_id)
 	
-	# Проверяем по имени родителя
+	# Дополнительная проверка по имени родителя
 	var parent = get_parent()
-	if parent:
-		if "Cart" in parent.name:
-			is_in_cart = true
-			# Определяем ID по имени родителя
-			if "1" in parent.name or "Player1" in parent.name:
-				cart_player_id = 1
-			elif "2" in parent.name or "Player2" in parent.name:
-				cart_player_id = 2
+	if parent and "Cart" in parent.name:
+		print("Родитель вагонетка:", parent.name)
+		is_in_cart = true
+		# Определяем ID по имени родителя
+		if "1" in parent.name or "Player1" in parent.name:
+			cart_player_id = 1
+		elif "2" in parent.name or "Player2" in parent.name:
+			cart_player_id = 2
 	
 	if is_in_cart:
-		print("Player: Я в вагонетке, ID:", cart_player_id)
+		print("Player: Я в вагонетке, ID:", cart_player_id, " Авторитет:", is_multiplayer_authority())
+		
 		# Отключаем коллизию
 		set_collision_layer_value(1, false)
 		set_collision_mask_value(1, false)
+		
 		# Отключаем обработку ввода
 		set_process(false)
 		set_physics_process(false)
-		# Немедленно устанавливаем анимацию вагонетки
-		set_cart_animation(cart_player_id == 2)  # Игрок 2 смотрит влево
+		
+		# Устанавливаем анимацию вагонетки
+		# Игрок 1 смотрит вправо (flip_h = false)
+		# Игрок 2 смотрит влево (flip_h = true)
+		var should_flip = (cart_player_id == 2)
+		print("Устанавливаю анимацию вагонетки, flip_h=", should_flip)
+		set_cart_animation(should_flip)
+		
 		return
 	
-	# Проверяем активность мультиплеера
+	# Обычный игрок (не в вагонетке)
 	multiplayer_active = multiplayer.has_multiplayer_peer()
-	
-	# Только локальный игрок обрабатывает ввод
 	set_process(is_multiplayer_authority() and multiplayer_active)
 	set_physics_process(is_multiplayer_authority() and multiplayer_active)
+
+func set_cart_animation(flip_h: bool = false):
+	if anim:
+		print("Player.set_cart_animation для ", name, " flip_h=", flip_h)
+		
+		# Принудительно устанавливаем анимацию
+		is_in_cart = true
+		anim.play("IDLE_SIDE2")
+		anim.flip_h = flip_h
+		
+		# Принудительно обновляем
+		anim.frame = 0
+		anim.play()
+	else:
+		print("Player.set_cart_animation: anim не найден для ", name)
 
 func _physics_process(delta: float) -> void:
 	if is_in_cart:
@@ -106,14 +128,6 @@ func _update_animation():
 		else:
 			anim.play("IDLE_FRONT2")
 			anim.flip_h = false
-
-# Новый метод для установки анимации в вагонетке
-func set_cart_animation(flip_h: bool = false):
-	if anim:
-		print("Устанавливаю анимацию вагонетки для игрока ", name, ", flip_h=", flip_h)
-		is_in_cart = true
-		anim.play("IDLE_SIDE2")
-		anim.flip_h = flip_h
 
 # Остальной код остается без изменений...
 func _process(delta: float) -> void:

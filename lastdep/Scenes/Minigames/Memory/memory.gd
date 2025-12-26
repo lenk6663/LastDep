@@ -540,43 +540,6 @@ func end_game(reason: String = ""):
 	# Отправляем команду завершения всем игрокам
 	finish_game_for_all.rpc(reason, scores)
 
-@rpc("authority", "call_local", "reliable")
-func finish_game_for_all(reason: String, final_scores: Array):
-	print("КОМАНДА ЗАВЕРШЕНИЯ ПОЛУЧЕНА")
-	
-	# Устанавливаем финальный счет
-	scores = final_scores.duplicate()
-	game_started = false
-	
-	# Определяем победителя
-	var winner_text = ""
-	if scores[0] > scores[1]:
-		winner_text = "Победил Игрок 1!"
-	elif scores[1] > scores[0]:
-		winner_text = "Победил Игрок 2!"
-	else:
-		winner_text = "Ничья!"
-	
-	if game_status_label:
-		game_status_label.text = "Игра окончена! " + winner_text + "\n" + reason
-		game_status_label.add_theme_color_override("font_color", Color.GOLD)
-	
-	print("Результат: ", winner_text)
-	print("Ожидание 3 секунд перед возвратом...")
-	
-	# Ждем 5 секунд
-	await get_tree().create_timer(3.0).timeout
-	
-	print("=")
-	print("MEMORY: Отправка сигнала и прямого вызова")
-	print("=")
-	
-	# 1. Пытаемся отправить сигнал (на всякий случай)
-	game_over.emit()
-	
-	# 2. ПРЯМОЙ ВЫЗОВ: Ищем Game.gd в родительской цепочке
-	call_game_return()
-
 func call_game_return():
 	print("ПРЯМОЙ ВЫЗОВ: Ищу Game.gd...")
 	
@@ -635,3 +598,55 @@ func stop_game_for_all(reason: String):
 func _enter_tree():
 	if not has_signal("game_over"):
 		add_user_signal("game_over")
+
+func get_winner_id() -> int:
+	# Определяем победителя
+	if scores[0] > scores[1]:
+		return 1
+	elif scores[1] > scores[0]:
+		return 2
+	else:
+		return 0  # Ничья
+
+# Измените функцию finish_game_for_all для сохранения победителя
+@rpc("authority", "call_local", "reliable")
+func finish_game_for_all(reason: String, final_scores: Array):
+	print("КОМАНДА ЗАВЕРШЕНИЯ ПОЛУЧЕНА")
+	
+	# Устанавливаем финальный счет
+	scores = final_scores.duplicate()
+	game_started = false
+	
+	# Определяем победителя
+	var winner_id = get_winner_id()
+	
+	# Сохраняем победителя в метаданные
+	set_meta("winner_id", winner_id)
+	
+	var winner_text = ""
+	if winner_id == 1:
+		winner_text = "Победил Игрок 1!"
+	elif winner_id == 2:
+		winner_text = "Победил Игрок 2!"
+	else:
+		winner_text = "Ничья!"
+	
+	if game_status_label:
+		game_status_label.text = "Игра окончена! " + winner_text + "\n" + reason
+		game_status_label.add_theme_color_override("font_color", Color.GOLD)
+	
+	print("Результат: ", winner_text)
+	print("Ожидание 3 секунд перед возвратом...")
+	
+	# Ждем 5 секунд
+	await get_tree().create_timer(3.0).timeout
+	
+	print("=")
+	print("MEMORY: Отправка сигнала и прямого вызова")
+	print("=")
+	
+	# 1. Пытаемся отправить сигнал (на всякий случай)
+	game_over.emit()
+	
+	# 2. ПРЯМОЙ ВЫЗОВ: Ищем Game.gd в родительской цепочке
+	call_game_return()

@@ -3,14 +3,19 @@ extends Node2D
 
 # ============== КОНСТАНТЫ ==============
 @onready var players_container: Node = $PlayersContainer
-@onready var background_music = get_node("/root/BackgroundMusic")
-
 const PLAYER_SCENE = preload("res://Player/Player.tscn")
 const NPC_SCENE = preload("res://Scenes/Main/NPC.tscn")
 const MEMORY_SCENE = preload("res://Scenes/Minigames/Memory/memory.tscn")
 const SHOOTING_SCENE = preload("res://Scenes/Minigames/Shooting/Shooting.tscn")
 const BATTLESHIP_SCENE = preload("res://Scenes/Minigames/Battleship/Battleship.tscn")
 
+# ============== ТАБЛО ПОБЕД ==============
+@onready var title_label: Label = $UI/Panel/TitleLabel
+@onready var player1_label: Label = $UI/Panel/Player1WinsLabel
+@onready var player2_label: Label = $UI/Panel/Player2WinsLabel
+
+var player_wins: Dictionary = {1: 0, 2: 0}  # Счетчик побед по игрокам
+var score_updated_this_game: bool = false
 # ============== ПЕРЕМЕННЫЕ ==============
 var current_minigame = null
 var minigame_active = false
@@ -21,12 +26,7 @@ func _ready():
 	print("=== ИГРА ЗАПУЩЕНА ===")
 	print("Мой peer_id:", multiplayer.get_unique_id())
 	print("Это сервер?", multiplayer.is_server())
-	
-	# Включаем игровую музыку (трек 0)
-	if background_music:
-		background_music.start_game_music()
-		print("Включена игровая музыка (трек 0)")
-	
+	init_scoreboard()
 	var my_spawn_pos = NetworkingManager.get_spawn_position(multiplayer.get_unique_id())
 	print("Моя позиция спавна:", my_spawn_pos)
 	
@@ -50,6 +50,16 @@ func _ready():
 		create_player(1, host_spawn_pos)
 		
 	add_minigame_triggers()
+	
+func init_scoreboard():
+	# Обновляем начальные значения табло
+	update_scoreboard_display()
+
+@rpc("authority", "call_remote", "reliable")
+func sync_scores(wins1: int, wins2: int):
+	player_wins[1] = wins1
+	player_wins[2] = wins2
+	update_scoreboard_display()
 
 func _exit_tree():
 	print("=== ИГРА ЗАВЕРШЕНА ===")
@@ -82,13 +92,7 @@ func remove_player(peer_id: int):
 func add_minigame_triggers():
 	# Создаем NPC для Memory игры
 	create_npc("memory", Vector2(-100, -50))
-=======
-func _exit_tree():
-	print("=== ИГРА ЗАВЕРШЕНА ===")
-	# При выходе из игры возвращаемся к музыке меню
-	if background_music:
-		background_music.back_to_menu()
-		print("Возврат к музыке меню")	
+	
 	# Создаем NPC для Shooting игры
 	create_npc("shooting", Vector2(105, -35))
 	
@@ -117,12 +121,6 @@ func start_memory_minigame():
 	print("Мой ID: ", multiplayer.get_unique_id())
 	print("=")
 	
-	# Меняем музыку на трек 2 для Memory
-	if background_music:
-		background_music.play_game_2()
-		print("Включена музыка для Memory (трек 2)")
-		
-	# И сервер, и клиент ДОЛЖНЫ создавать свою копию игры
 	# Скрываем основную игру
 	visible = false
 	if players_container:
@@ -170,6 +168,9 @@ func start_shooting_minigame():
 	visible = false
 	if players_container:
 		players_container.visible = false
+	
+	hide_scoreboard()
+	set_process_input(false)
 	set_process(false)
 	
 	if players_container:
@@ -177,7 +178,6 @@ func start_shooting_minigame():
 			player.set_process(false)
 			player.set_physics_process(false)
 	
-	# Загружаем и создаем игру
 	if not SHOOTING_SCENE:
 		print("ОШИБКА: Не могу загрузить сцену Shooting!")
 		_on_shooting_game_over()
@@ -198,8 +198,16 @@ func start_shooting_minigame():
 		game.add_user_signal("game_over")
 	
 	add_child(game)
+	
+	# ВКЛЮЧАЕМ обработку ввода в самой мини-игре
+	game.set_process_input(true)
+	game.set_process_unhandled_input(true)
+	game.set_process(true)
+	game.set_physics_process(true)
+	
 	current_minigame = game
 	minigame_active = true
+	
 	print("Мини-игра Shooting добавлена (peer: ", multiplayer.get_unique_id(), ")")
 
 func start_battleship_minigame():
@@ -214,7 +222,7 @@ func start_battleship_minigame():
 	if players_container:
 		players_container.visible = false
 	set_process(false)
-	
+	hide_scoreboard()
 	if players_container:
 		for player in players_container.get_children():
 			player.set_process(false)
@@ -252,6 +260,18 @@ func _on_memory_game_over():
 	print("Время: ", Time.get_time_string_from_system())
 	print("=")
 	
+	if multiplayer.is_server():
+		# Сервер определяет победителя сам
+		var winner_id = determine_winner_from_memory()
+		if winner_id > 0:
+			update_scoreboard(winner_id)
+	else:
+		# Клиент отправляет результат на сервер
+		var winner_id = determine_winner_from_memory()
+		if winner_id > 0:
+			report_game_result.rpc_id(1, "memory", winner_id)
+	
+	# Все равно очищаем игру
 	if current_minigame and is_instance_valid(current_minigame):
 		print("Удаляю мини-игру Memory...")
 		current_minigame.queue_free()
@@ -265,6 +285,18 @@ func _on_shooting_game_over():
 	print("Время: ", Time.get_time_string_from_system())
 	print("=")
 	
+	if multiplayer.is_server():
+		# Сервер определяет победителя сам
+		var winner_id = determine_winner_from_shooting()
+		if winner_id > 0:
+			update_scoreboard(winner_id)
+	else:
+		# Клиент отправляет результат на сервер
+		var winner_id = determine_winner_from_shooting()
+		if winner_id > 0:
+			report_game_result.rpc_id(1, "shooting", winner_id)
+	
+	# Все равно очищаем игру
 	if current_minigame and is_instance_valid(current_minigame):
 		print("Удаляю мини-игру Shooting...")
 		current_minigame.queue_free()
@@ -278,6 +310,14 @@ func _on_battleship_game_over():
 	print("Время: ", Time.get_time_string_from_system())
 	print("=")
 	
+	# Только клиент отправляет результат на сервер
+	if not multiplayer.is_server():
+		var winner_id = determine_winner_from_battleship()
+		if winner_id > 0:
+			# Клиент отправляет результат серверу
+			report_game_result.rpc_id(1, "battleship", winner_id)
+	
+	# Все равно очищаем игру
 	if current_minigame and is_instance_valid(current_minigame):
 		print("Удаляю мини-игру Battleship...")
 		current_minigame.queue_free()
@@ -285,28 +325,110 @@ func _on_battleship_game_over():
 	
 	restore_main_game()
 
+# ============== ФУНКЦИИ ОПРЕДЕЛЕНИЯ ПОБЕДИТЕЛЯ ==============
+func determine_winner_from_memory() -> int:
+	if not current_minigame:
+		return 0
+	
+	# Пытаемся получить данные из мини-игры
+	if current_minigame.has_method("get_winner_id"):
+		return current_minigame.get_winner_id()
+	
+	# Пытаемся получить из метаданных
+	if current_minigame.has_meta("winner_id"):
+		return current_minigame.get_meta("winner_id")
+	
+	# Пытаемся получить из переменных игры
+	if current_minigame.has_node("GridContainer") and current_minigame.get_node("GridContainer").has_method("get_winner_id"):
+		return current_minigame.get_node("GridContainer").get_winner_id()
+	
+	return 0  # Ничья или ошибка
+
+func determine_winner_from_shooting() -> int:
+	if not current_minigame:
+		return 0
+	
+	# Пытаемся получить данные из мини-игры
+	if current_minigame.has_method("get_winner_id"):
+		return current_minigame.get_winner_id()
+	
+	# Пытаемся получить из метаданных
+	if current_minigame.has_meta("winner_id"):
+		return current_minigame.get_meta("winner_id")
+	
+	return 0  # Ничья или ошибка
+
+func determine_winner_from_battleship() -> int:
+	if not current_minigame:
+		return 0
+	
+	# Пытаемся получить данные из мини-игры
+	if current_minigame.has_method("get_winner_id"):
+		return current_minigame.get_winner_id()
+	
+	# Пытаемся получить из метаданных
+	if current_minigame.has_meta("winner_id"):
+		return current_minigame.get_meta("winner_id")
+	
+	return 0  # Ничья или ошибка
+
 func restore_main_game():
 	print("Восстанавливаю основную игру...")
+	
+	# Если мини-игра еще существует, удаляем ее
+	if current_minigame and is_instance_valid(current_minigame):
+		print("Удаляю мини-игру...")
+		current_minigame.queue_free()
+		current_minigame = null
+	
+	# Сбрасываем флаг обновления счета
+	score_updated_this_game = false
 	
 	# Показываем основную игру
 	visible = true
 	if players_container:
 		players_container.visible = true
 	
-	# Возобновляем обработку
+	# Показываем табло
+	show_scoreboard()
+	
+	# Возобновляем обработку ввода
+	set_process_input(true)
 	set_process(true)
 	set_physics_process(true)
 	
 	# Возобновляем игроков
-	for player in players_container.get_children():
-		player.set_process(true)
-		player.set_physics_process(true)
-		player.visible = true
+	if players_container:
+		for player in players_container.get_children():
+			player.set_process(true)
+			player.set_physics_process(true)
+			player.visible = true
 	
 	minigame_active = false
 	print("Основная игра восстановлена")
 
 # ============== RPC СИНХРОНИЗАЦИЯ ==============
+@rpc("any_peer", "call_local", "reliable")
+func report_game_result(game_type: String, winner_id: int):
+	if multiplayer.is_server():
+		print("Сервер получил результат игры ", game_type, " от игрока ", multiplayer.get_remote_sender_id())
+		print("Победитель: Игрок ", winner_id)
+		
+		# Проверяем, чтобы winner_id был валидным (1 или 2)
+		if winner_id not in [1, 2]:
+			print("ОШИБКА: Неверный winner_id:", winner_id)
+			return
+		
+		# Обновляем счет на сервере
+		player_wins[winner_id] += 1
+		print("Обновление счета на сервере: Игрок %d теперь имеет %d побед" % [winner_id, player_wins[winner_id]])
+		
+		# Обновляем отображение на сервере
+		update_scoreboard_display()
+		
+		# Синхронизируем с клиентами
+		sync_scores_to_clients.rpc(player_wins[1], player_wins[2])
+			
 @rpc("authority", "call_local", "reliable")
 func start_minigame_on_client(minigame_type: String):
 	if multiplayer.is_server():
@@ -364,203 +486,6 @@ func sync_memory_game_state(is_active: bool, current_player: int, game_data: Arr
 		if current_minigame and current_minigame.has_method("update_game_state"):
 			current_minigame.update_game_state(is_active, current_player, game_data)
 
-func _on_memory_game_over():
-	print("=")
-	print("GAME.GD: _on_memory_game_over ВЫЗВАНА")
-	print("Время: ", Time.get_time_string_from_system())
-	print("=")
-	
-	# Возвращаем музыку к треку 0 (основная игровая)
-	if background_music:
-		background_music.play_game_0()
-		print("Возвращена основная игровая музыка (трек 0)")
-	
-	if current_minigame and is_instance_valid(current_minigame):
-		print("Удаляю мини-игру...")
-		current_minigame.queue_free()
-		current_minigame = null
-	
-	visible = true
-	players_container.visible = true
-	set_process(true)
-	
-	for player in players_container.get_children():
-		player.set_process(true)
-		player.set_physics_process(true)
-		player.visible = true
-	
-	print("ВОЗВРАТ В ОСНОВНУЮ ИГРУ ЗАВЕРШЕН")
-
-func return_to_game():
-	print("Аварийный возврат в игру")
-	_on_memory_game_over()
-
-
-@rpc("authority", "call_remote", "reliable")
-func end_minigame():
-	minigame_active = false
-	
-		# Принудительный возврат музыки
-	if background_music:
-		background_music.play_game_0()
-		
-	if current_minigame:
-		current_minigame.queue_free()
-		current_minigame = null
-	
-	players_container.visible = true
-	
-	for player in players_container.get_children():
-		player.set_process(true)
-		player.set_physics_process(true)
-
-func _input(event):
-	if event.is_action_pressed("ui_cancel") and minigame_active:
-		end_minigame.rpc_id(1) 
-		
-func start_battleship_minigame():
-	print("=")
-	print("GAME.GD: ЗАПУСК МИНИ-ИГРЫ 'ПОИСК ФЕЙВЕРКОВ'")
-	print("=")
-	
-	# Меняем музыку на трек 1 для Battleship
-	if background_music:
-		background_music.play_game_1()
-		print("Включена музыка для Battleship (трек 1)")
-	
-	visible = false
-	players_container.visible = false
-	
-	set_process(false)
-	for player in players_container.get_children():
-		player.set_process(false)
-		player.set_physics_process(false)
-	
-	var battleship_scene = preload("res://Scenes/Minigames/Battleship/Battleship.tscn")
-	if not battleship_scene:
-		print("ОШИБКА: Не могу загрузить сцену Battleship!")
-		return
-	
-	var game = battleship_scene.instantiate()
-	game.name = "BattleshipGame"
-	
-	print("Подключаю сигнал game_over...")
-	
-	if game.has_signal("game_over"):
-		game.game_over.connect(func(): 
-			print("!!! СИГНАЛ game_over ПОЛУЧЕН В GAME.GD !!!")
-			_on_battleship_game_over()
-		)
-		print("Сигнал подключен")
-	else:
-		print("ОШИБКА: Сигнал game_over не найден в мини-игре!")
-		get_tree().create_timer(300.0).timeout.connect(
-			func(): 
-				print("АВТО-ВОЗВРАТ по таймауту")
-				_on_battleship_game_over()
-		)
-	
-	add_child(game)
-	current_minigame = game
-	print("Мини-игра 'Поиск фейверков' добавлена")
-
-func _on_battleship_game_over():
-	print("=")
-	print("GAME.GD: _on_battleship_game_over ВЫЗВАНА")
-	print("=")
-	
-	# Возвращаем музыку к треку 0 (основная игровая)
-	if background_music:
-		background_music.play_game_0()
-		print("Возвращена основная игровая музыка (трек 0)")
-	
-	if current_minigame and is_instance_valid(current_minigame):
-		print("Удаляю мини-игру 'Поиск фейверков'...")
-		current_minigame.queue_free()
-		current_minigame = null
-	
-	visible = true
-	players_container.visible = true
-	set_process(true)
-	
-	for player in players_container.get_children():
-		player.set_process(true)
-		player.set_physics_process(true)
-		player.visible = true
-	
-	print("ВОЗВРАТ В ОСНОВНУЮ ИГРУ ЗАВЕРШЕН")
-	
-func start_shooting_minigame():
-	print("=")
-	print("GAME.GD: ЗАПУСК СТРЕЛЬБЫ")
-	print("Текущая сцена:", get_tree().current_scene.name)
-	print("Мой ID:", multiplayer.get_unique_id())
-	print("=")
-	
-	# Меняем музыку на трек 3 для Shooting
-	if background_music:
-		background_music.play_game_3()
-		print("Включена музыка для Shooting (трек 3)")
-	
-	visible = false
-	if players_container:
-		players_container.visible = false
-	set_process(false)
-	
-	for player in players_container.get_children():
-		player.set_process(false)
-		player.set_physics_process(false)
-	
-	var shooting_scene_path = "res://Scenes/Minigames/Shooting/Shooting.tscn"
-	print("Пробую загрузить:", shooting_scene_path)
-	
-	if ResourceLoader.exists(shooting_scene_path):
-		var shooting_scene = load(shooting_scene_path)
-		var game_instance = shooting_scene.instantiate()
-		game_instance.name = "ShootingGame"
-		
-		if game_instance.has_signal("game_over"):
-			game_instance.game_over.connect(_on_shooting_game_over)
-			print("Сигнал game_over подключен")
-		else:
-			print("ВНИМАНИЕ: Сигнал game_over не найден!")
-			# Создаем таймер для авто-возврата
-			var timer = get_tree().create_timer(60.0)
-			timer.timeout.connect(_on_shooting_game_over)
-		
-		add_child(game_instance)
-		current_minigame = game_instance
-		print("Мини-игра добавлена успешно!")
-	else:
-		print("ОШИБКА: Не могу найти файл сцены!")
-		_on_shooting_game_over()
-
-func _on_shooting_game_over():
-	print("=")
-	print("GAME.GD: ВОЗВРАТ ИЗ СТРЕЛЬБЫ")
-	print("=")
-
-	# Возвращаем музыку к треку 0 (основная игровая)
-	if background_music:
-		background_music.play_game_0()
-		print("Возвращена основная игровая музыка (трек 0)")
-	
-	if current_minigame and is_instance_valid(current_minigame):
-		current_minigame.queue_free()
-		current_minigame = null
-	
-	visible = true
-	if players_container:
-		players_container.visible = true
-	set_process(true)
-	
-	for player in players_container.get_children():
-		player.set_process(true)
-		player.set_physics_process(true)
-		player.visible = true
-	
-	print("Возврат в основную игру завершен")
-
 @rpc("authority", "call_remote", "reliable")
 func sync_minigame_start(minigame_type: String, players: Array):
 	print("СИНХРОНИЗАЦИЯ ЗАПУСКА: ", minigame_type, " для игроков: ", players)
@@ -586,3 +511,59 @@ func queue_minigame_start(minigame_type: String, players: Array):
 				start_battleship_minigame()
 			"shooting":
 				start_shooting_minigame()
+				
+
+func update_scoreboard_display():
+	if title_label:
+		title_label.text = "Победы в минииграх:"
+	
+	if player1_label:
+		player1_label.text = "Игрок 1: %d" % player_wins.get(1, 0)
+	
+	if player2_label:
+		player2_label.text = "Игрок 2: %d" % player_wins.get(2, 0)
+	
+	print("Табло обновлено: Игрок 1=%d, Игрок 2=%d" % [player_wins.get(1, 0), player_wins.get(2, 0)])
+
+func hide_scoreboard():
+	# Скрываем весь UI
+	var ui = get_node_or_null("UI")
+	if ui:
+		ui.visible = false
+		print("UI скрыт")
+	else:
+		print("UI не найден для скрытия")
+
+func show_scoreboard():
+	# Показываем весь UI
+	var ui = get_node_or_null("UI")
+	if ui:
+		ui.visible = true
+		print("UI показан")
+	else:
+		print("UI не найден для показа")
+
+@rpc("authority", "call_remote", "reliable")
+func sync_scores_to_clients(wins1: int, wins2: int):
+	# Только обновляем данные, если мы на клиенте
+	if not multiplayer.is_server():
+		player_wins[1] = wins1
+		player_wins[2] = wins2
+		update_scoreboard_display()
+		print("Клиент получил обновленные счета: ", wins1, ", ", wins2)
+
+func update_scoreboard(winner_id: int):
+	if winner_id in player_wins:
+		player_wins[winner_id] += 1
+		print("Обновление счета: Игрок %d теперь имеет %d побед" % [winner_id, player_wins[winner_id]])
+	
+	# Обновляем отображение
+	update_scoreboard_display()
+	
+	# Синхронизируем со всеми клиентами (только сервер делает это)
+	if multiplayer.is_server():
+		print("Сервер: синхронизирую счета с клиентами")
+		sync_scores_to_clients.rpc(player_wins[1], player_wins[2])
+
+func get_player_wins() -> Dictionary:
+	return player_wins.duplicate()

@@ -808,14 +808,14 @@ func switch_turn(new_player_id: int, was_hit: bool):
 		else:
 			status_label.text = "Ход игрока " + player_num + " - Ход противника"
 
-@rpc("authority", "call_local", "reliable")
-func end_game(reason: String):
-	if not game_started:
-		return
-	
-	game_started = false
-	
-	var winner_text = ""
+func _enter_tree():
+	if not has_signal("game_over"):
+		add_user_signal("game_over")
+
+# Добавьте эти функции в конец файла battleship.gd (перед последней скобкой)
+
+func get_winner_id() -> int:
+	# Определяем победителя
 	var max_hits = -1
 	var winner_id = 0
 	
@@ -824,12 +824,30 @@ func end_game(reason: String):
 			max_hits = player_hits[player_id]
 			winner_id = player_id
 	
+	# Преобразуем peer_id в номер игрока (1 или 2)
+	if winner_id == 1:
+		return 1
+	else: 
+		return 2
+
+
+@rpc("authority", "call_local", "reliable")
+func end_game(reason: String):
+	if not game_started:
+		return
+	
+	game_started = false
+	
+	var winner_id = get_winner_id()
+	
+	# Сохраняем победителя в метаданные
+	set_meta("winner_id", winner_id)
+	
+	var winner_text = ""
 	if winner_id == 1:
 		winner_text = "ПОБЕДИЛ ИГРОК 1!"
-	elif winner_id == multiplayer.get_peers()[0] if multiplayer.get_peers().size() > 0 else 2:
+	elif winner_id == 2:
 		winner_text = "ПОБЕДИЛ ИГРОК 2!"
-	else:
-		winner_text = "НИЧЬЯ!"
 	
 	if status_label:
 		status_label.text = "ИГРА ОКОНЧЕНА!\n" + winner_text + "\n" + reason
@@ -838,7 +856,3 @@ func end_game(reason: String):
 	await get_tree().create_timer(5.0).timeout
 	
 	game_over.emit()
-
-func _enter_tree():
-	if not has_signal("game_over"):
-		add_user_signal("game_over")

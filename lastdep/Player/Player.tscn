@@ -396,7 +396,7 @@ scale = Vector2(0.7274228, 0.7274224)
 sprite_frames = SubResource("SpriteFrames_3mea3")
 animation = &"IDLE_SIDE2"
 autoplay = "IDLE_FRONT"
-frame_progress = 0.698887
+frame_progress = 0.81949776
 flip_h = true
 
 [node name="Camera2D" type="Camera2D" parent="."]

@@ -1,10 +1,10 @@
 [gd_scene load_steps=4 format=3 uid="uid://bnwpv0ghebtcr"]
 
 [ext_resource type="Script" uid="uid://c3l4xh4cnrieb" path="res://Scenes/Minigames/Shooting/Dart.gd" id="1_kthvx"]
-[ext_resource type="Texture2D" uid="uid://cwb86khr2dvp8" path="res://Assets/Minigames/Shooting/Dart.png" id="2_dvh1k"]
+[ext_resource type="Texture2D" path="res://Assets/Minigames/Shooting/Dart.png" id="2_dvh1k"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kthvx"]
-size = Vector2(104.5, 12)
+size = Vector2(28, 5)
 
 [node name="Dart" type="Area2D"]
 script = ExtResource("1_kthvx")
@@ -12,20 +12,6 @@ script = ExtResource("1_kthvx")
 [node name="Sprite" type="Sprite2D" parent="."]
 texture = ExtResource("2_dvh1k")
 
-[node name="ColorRect" type="ColorRect" parent="Sprite"]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -53.5
-offset_top = -6.75
-offset_right = 53.5
-offset_bottom = 6.75
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0, 0, 0, 1)
-
 [node name="Collision" type="CollisionShape2D" parent="."]
-position = Vector2(1.75, 0)
+position = Vector2(1, -0.5)
 shape = SubResource("RectangleShape2D_kthvx")

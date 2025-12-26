@@ -8,6 +8,9 @@ var dialogue_data: Array[Dictionary] = []
 var current_player_id: int = -1
 var ready_players: Array = []
 var minigame_type: String = ""
+var countdown_active: bool = false
+var countdown_value: int = 3
+var countdown_timer: Timer
 
 @onready var panel = $Panel
 @onready var title_label = $Panel/TitleLabel
@@ -25,7 +28,11 @@ func _ready():
 	ready_button.pressed.connect(_on_ready_pressed)
 	position_dialog_above_npc()
 	
-
+	countdown_timer = Timer.new()
+	add_child(countdown_timer)
+	countdown_timer.timeout.connect(_on_countdown_tick)
+	countdown_timer.one_shot = false
+	
 	is_player_ready = current_player_id in ready_players
 	print("[DIALOG DEBUG] Инициализация: игрок", current_player_id, 
 		  " ready=", is_player_ready, " из списка:", ready_players)
@@ -173,15 +180,59 @@ func set_ready_players(players_list: Array):
 	
 	print("[DIALOG] После синхронизации: is_player_ready =", is_player_ready)
 	
+	# ПРОВЕРЯЕМ НАЧАЛО ОТСЧЕТА
+	if ready_players.size() >= 2 and not countdown_active:
+		start_countdown()
+	
 	update_ready_status()
+
+func start_countdown():
+	print("[DIALOG] Начинаем обратный отсчет!")
+	countdown_active = true
+	countdown_value = 3
+	ready_button.disabled = true
+	
+	# Обновляем статус
+	update_countdown_display()
+	
+	# Запускаем таймер
+	countdown_timer.start(1.0)
+
+func update_countdown_display():
+	if countdown_active:
+		ready_status_label.text = "Начинаем через %d..." % countdown_value
+	elif ready_players.size() >= 2:
+		ready_status_label.text = "Оба игрока готовы! Ожидание..."
+	else:
+		ready_status_label.text = "Готовы: %d/2 игрока" % [ready_players.size()]
+
+func _on_countdown_tick():
+	countdown_value -= 1
+	
+	if countdown_value > 0:
+		update_countdown_display()
+	else:
+		# Отсчет завершен
+		countdown_timer.stop()
+		ready_status_label.text = "СТАРТ!"
+		
+		# Ждем немного и закрываем диалог
+		await get_tree().create_timer(0.5).timeout
+		
+		# Отправляем сигнал о начале игры
+		if has_signal("start_game"):
+			emit_signal("start_game")
+		
+		# Закрываем диалог
+		queue_free()
+
+# Добавьте очистку при закрытии
+func _exit_tree():
+	if countdown_timer:
+		countdown_timer.stop()
+	
 
 func show_countdown():
 	print("[DIALOG] Показываю отсчет для игрока ", current_player_id)
 	ready_button.disabled = true
 	ready_status_label.text = "Начинаем игру..."
-
-func _input(event):
-	if event.is_action_pressed("ui_cancel"):
-		print("[DIALOG] Закрытие по ESC для игрока ", current_player_id)
-		dialogue_closed.emit()
-		queue_free()
