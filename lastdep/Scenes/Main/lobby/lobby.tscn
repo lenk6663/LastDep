@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://blyyvf7ag18aa"]
 
-[ext_resource type="Script" uid="uid://dj4gwx201ad85" path="res://Scenes/Main/lobby/lobby.gd" id="1_6ev6a"]
+[ext_resource type="Script" uid="uid://cxu7m6ghw6d2o" path="res://Scenes/Main/lobby/lobby.gd" id="1_6ev6a"]
 
 [node name="Lobby" type="Control"]
 layout_mode = 3
@@ -10,14 +10,26 @@ offset_top = 174.0
 offset_right = 490.0
 offset_bottom = 174.0
 script = ExtResource("1_6ev6a")
+metadata/_edit_use_anchors_ = true
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -79.5
+offset_right = 234.0
+offset_bottom = 185.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="TitleLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 0
 text = "ЛОББИ"
 
 [node name="StatusLabel" type="Label" parent="VBoxContainer"]

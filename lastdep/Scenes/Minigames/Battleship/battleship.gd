@@ -856,3 +856,12 @@ func end_game(reason: String):
 	await get_tree().create_timer(5.0).timeout
 	
 	game_over.emit()
+
+func _input(event):
+	# Пропускаем ввод если открыты настройки
+	if InputManager.is_settings_active():
+		return
+	
+	# ИГНОРИРУЕМ события мыши и джойстика
+	if event is InputEventMouse or event is InputEventJoypadMotion or event is InputEventJoypadButton:
+		return

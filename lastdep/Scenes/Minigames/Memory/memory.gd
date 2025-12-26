@@ -17,7 +17,8 @@ var scores = [0, 0]
 var current_player = 0
 var can_play = false
 var game_started = false
-
+var game_ended_called = false
+var game_over_called = false
 # Ссылки на UI элементы
 @onready var current_player_label = $"../CurrentPlayerLabel"
 @onready var player1_score_label = $"../Player1Score"
@@ -541,6 +542,10 @@ func end_game(reason: String = ""):
 	finish_game_for_all.rpc(reason, scores)
 
 func call_game_return():
+	# Защита от повторного вызова
+	if game_over_called:
+		return
+	
 	print("ПРЯМОЙ ВЫЗОВ: Ищу Game.gd...")
 	
 	# Поднимаемся по родительской цепочке
@@ -554,6 +559,7 @@ func call_game_return():
 		if parent.has_method("_on_memory_game_over"):
 			print("✓ Нашел Game.gd! Вызываю _on_memory_game_over()")
 			parent._on_memory_game_over()
+			game_over_called = true
 			return
 		
 		parent = parent.get_parent()
@@ -566,6 +572,7 @@ func call_game_return():
 	if game_node and game_node.has_method("_on_memory_game_over"):
 		print("✓ Нашел Game.gd по пути /root/main")
 		game_node._on_memory_game_over()
+		game_over_called = true
 		return
 	
 	print("✗ Game.gd не найден вообще")
@@ -608,10 +615,21 @@ func get_winner_id() -> int:
 	else:
 		return 0  # Ничья
 
-# Измените функцию finish_game_for_all для сохранения победителя
 @rpc("authority", "call_local", "reliable")
 func finish_game_for_all(reason: String, final_scores: Array):
-	print("КОМАНДА ЗАВЕРШЕНИЯ ПОЛУЧЕНА")
+	# Защита от повторного вызова
+	if game_over_called:
+		print("Memory: finish_game_for_all уже была вызвана, пропускаю")
+		return
+	
+	game_over_called = true
+	
+	print("=")
+	print("MEMORY.GD: finish_game_for_all ВЫЗВАНА")
+	print("Причина: ", reason)
+	print("Финальный счет: ", final_scores)
+	print("Мой ID: ", multiplayer.get_unique_id())
+	print("Я сервер: ", multiplayer.is_server())
 	
 	# Устанавливаем финальный счет
 	scores = final_scores.duplicate()
@@ -619,9 +637,21 @@ func finish_game_for_all(reason: String, final_scores: Array):
 	
 	# Определяем победителя
 	var winner_id = get_winner_id()
+	print("Определен победитель через get_winner_id(): Игрок", winner_id)
 	
-	# Сохраняем победителя в метаданные
+	# Устанавливаем метаданные на корневом узле
+	print("Устанавливаю метаданные winner_id =", winner_id)
 	set_meta("winner_id", winner_id)
+	print("✓ Метаданные установлены на корневом узле: ", get_meta("winner_id"))
+	
+	# Также устанавливаем метаданные на GridContainer если он доступен
+	# GridContainer - это this (сам объект), так как скрипт прикреплен к GridContainer
+	var grid_container = self  # memory.gd прикреплен к GridContainer
+	grid_container.set_meta("winner_id", winner_id)
+	print("✓ Метаданные установлены на GridContainer")
+	
+	# Добавляем метод get_winner_id() через метаданные
+	set_meta("_get_winner_id_func", Callable(self, "_call_get_winner_id"))
 	
 	var winner_text = ""
 	if winner_id == 1:
@@ -638,15 +668,29 @@ func finish_game_for_all(reason: String, final_scores: Array):
 	print("Результат: ", winner_text)
 	print("Ожидание 3 секунд перед возвратом...")
 	
-	# Ждем 5 секунд
+	# Ждем 3 секунды
 	await get_tree().create_timer(3.0).timeout
 	
 	print("=")
 	print("MEMORY: Отправка сигнала и прямого вызова")
 	print("=")
 	
-	# 1. Пытаемся отправить сигнал (на всякий случай)
+	# 1. Отправляем сигнал game_over
 	game_over.emit()
+	print("Сигнал game_over отправлен")
 	
-	# 2. ПРЯМОЙ ВЫЗОВ: Ищем Game.gd в родительской цепочке
+	# 2. Прямой вызов Game.gd
 	call_game_return()
+
+# Вспомогательная функция для вызова через метаданные
+func _call_get_winner_id():
+	return get_winner_id()
+	
+func _input(event):
+	# Пропускаем ввод если открыты настройки
+	if InputManager.is_settings_active():
+		return
+	
+	# ИГНОРИРУЕМ события мыши и джойстика
+	if event is InputEventMouse or event is InputEventJoypadMotion or event is InputEventJoypadButton:
+		return

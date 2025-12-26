@@ -1,6 +1,6 @@
 # settings.gd
 extends Control
-
+signal closed
 # Привязка узлов из вашей сцены
 @onready var music_slider: HSlider = $VBoxContainer/HBoxContainer/MusicSlider
 @onready var resolution_option: OptionButton = $VBoxContainer/HBoxContainer2/ResolutionOption
@@ -18,7 +18,8 @@ var resolutions = [
 
 func _ready():
 	print("Настройки загружены")
-	
+	set_process_input(true)
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	# Инициализация элементов
 	_init_resolution_options()
 	_load_settings()
@@ -145,10 +146,13 @@ func _on_resolution_selected(index: int):
 		_save_settings()
 
 func _on_back_pressed():
-	print("Закрытие настроек")	
-	var menu = get_tree().root.get_node("Menu")  # Предполагая что меню называется "Menu"
-	if menu and menu.has_method("show_menu"):
-		menu.show_menu()
-		print("Меню показано")
+	print("Закрытие настроек")
+	closed.emit()  # Отправляем сигнал закрытия
 	
 	queue_free()
+	
+func _input(event):
+	if event.is_action_pressed("ui_cancel"):  # ESC
+		print("Settings: Нажат ESC, закрываю")
+		_on_back_pressed()
+		get_viewport().set_input_as_handled()

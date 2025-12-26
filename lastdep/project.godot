@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 NetworkingManager="*res://Scenes/Main/NetworkingManager.gd"
 BackgroundMusic="*res://Scenes/Main/background_music.gd"
+InputManager="*res://Scenes/Main/InputManager.gd"
 
 [gui]
 

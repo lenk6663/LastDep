@@ -13,9 +13,12 @@ const BATTLESHIP_SCENE = preload("res://Scenes/Minigames/Battleship/Battleship.t
 @onready var title_label: Label = $UI/Panel/TitleLabel
 @onready var player1_label: Label = $UI/Panel/Player1WinsLabel
 @onready var player2_label: Label = $UI/Panel/Player2WinsLabel
+@onready var victory_screen: Control = $UI/VictoryScreen
 
 var player_wins: Dictionary = {1: 0, 2: 0}  # Счетчик побед по игрокам
 var score_updated_this_game: bool = false
+var total_victory_threshold = 3
+var game_finished = false
 # ============== ПЕРЕМЕННЫЕ ==============
 var current_minigame = null
 var minigame_active = false
@@ -126,7 +129,7 @@ func start_memory_minigame():
 		var background_music = get_node("BackgroundMusic")
 		background_music.play_game_2()
 		print("Включена музыка для Memory (трек 2)")
-	
+	hide_scoreboard()
 	# Скрываем основную игру
 	visible = false
 	if players_container:
@@ -276,6 +279,8 @@ func _on_memory_game_over():
 	print("=")
 	print("GAME.GD: _on_memory_game_over ВЫЗВАНА")
 	print("Время: ", Time.get_time_string_from_system())
+	print("Мой ID: ", multiplayer.get_unique_id())
+	print("Я сервер: ", multiplayer.is_server())
 	print("=")
 	
 	# Возвращаем музыку к треку 0 (основная игровая)
@@ -284,18 +289,21 @@ func _on_memory_game_over():
 		background_music.play_game_0()
 		print("Возвращена основная игровая музыка (трек 0)")
 	
+	# ТОЛЬКО сервер обновляет счет
 	if multiplayer.is_server():
-		# Сервер определяет победителя сам
+		# Сервер определяет победителя
 		var winner_id = determine_winner_from_memory()
+		print("Сервер определил победителя Memory: Игрок", winner_id)
+		
 		if winner_id > 0:
+			print("Сервер обновляет счет для игрока", winner_id)
 			update_scoreboard(winner_id)
+		else:
+			print("Сервер: не удалось определить победителя")
 	else:
-		# Клиент отправляет результат на сервер
-		var winner_id = determine_winner_from_memory()
-		if winner_id > 0:
-			report_game_result.rpc_id(1, "memory", winner_id)
+		print("Клиент: завершаю игру, жду синхронизации счета от сервера")
 	
-	# Все равно очищаем игру
+	# Очищаем игру
 	if current_minigame and is_instance_valid(current_minigame):
 		print("Удаляю мини-игру Memory...")
 		current_minigame.queue_free()
@@ -315,16 +323,17 @@ func _on_shooting_game_over():
 		background_music.play_game_0()
 		print("Возвращена основная игровая музыка (трек 0)")
 	
+	# ЗАМЕНИТЕ на этот упрощенный код:
 	if multiplayer.is_server():
-		# Сервер определяет победителя сам
+		# Только сервер определяет победителя и обновляет счет
 		var winner_id = determine_winner_from_shooting()
+		print("Сервер определил победителя Shooting: Игрок", winner_id)
+		
 		if winner_id > 0:
-			update_scoreboard(winner_id)
-	else:
-		# Клиент отправляет результат на сервер
-		var winner_id = determine_winner_from_shooting()
-		if winner_id > 0:
-			report_game_result.rpc_id(1, "shooting", winner_id)
+			update_scoreboard(winner_id)  # Эта функция теперь только на сервере
+	
+	# Клиенты НИЧЕГО не делают - просто возвращаются в игру
+	print("Возвращение в основную игру...")
 	
 	# Все равно очищаем игру
 	if current_minigame and is_instance_valid(current_minigame):
@@ -363,22 +372,43 @@ func _on_battleship_game_over():
 
 # ============== ФУНКЦИИ ОПРЕДЕЛЕНИЯ ПОБЕДИТЕЛЯ ==============
 func determine_winner_from_memory() -> int:
+	print("=")
+	print("Game.gd: determine_winner_from_memory() вызвана")
+	
 	if not current_minigame:
+		print("ОШИБКА: current_minigame не существует!")
 		return 0
 	
-	# Пытаемся получить данные из мини-игры
+	print("Текущая мини-игра: ", current_minigame.name)
+	print("Тип объекта: ", current_minigame.get_class())
+	
+	# 1. Пробуем получить через специальный мета-метод
+	if current_minigame.has_meta("_get_winner_id_func"):
+		var func_callable = current_minigame.get_meta("_get_winner_id_func")
+		if func_callable is Callable:
+			var winner = func_callable.call()
+			print("Найден мета-метод _get_winner_id_func -> ", winner)
+			return winner
+	
+	# 2. Пытаемся получить данные из мини-игры
 	if current_minigame.has_method("get_winner_id"):
-		return current_minigame.get_winner_id()
+		var winner = current_minigame.get_winner_id()
+		print("Найден метод get_winner_id() -> ", winner)
+		return winner
 	
-	# Пытаемся получить из метаданных
+	print("Метод get_winner_id() НЕ найден")
+	
+	# 3. Пытаемся получить из метаданных
 	if current_minigame.has_meta("winner_id"):
-		return current_minigame.get_meta("winner_id")
+		var winner = current_minigame.get_meta("winner_id")
+		print("Найден winner_id в метаданных -> ", winner)
+		return winner
 	
-	# Пытаемся получить из переменных игры
-	if current_minigame.has_node("GridContainer") and current_minigame.get_node("GridContainer").has_method("get_winner_id"):
-		return current_minigame.get_node("GridContainer").get_winner_id()
+	print("Метаданные winner_id НЕ найдены")
 	
-	return 0  # Ничья или ошибка
+	print("=")
+	print("НИЧЕГО не найдено! Возвращаю 0")
+	return 0
 
 func determine_winner_from_shooting() -> int:
 	if not current_minigame:
@@ -451,8 +481,13 @@ func return_to_game():
 @rpc("any_peer", "call_local", "reliable")
 func report_game_result(game_type: String, winner_id: int):
 	if multiplayer.is_server():
-		print("Сервер получил результат игры ", game_type, " от игрока ", multiplayer.get_remote_sender_id())
+		print("=")
+		print("СЕРВЕР: report_game_result ВЫЗВАН")
+		print("Отправитель: ", multiplayer.get_remote_sender_id())
+		print("Тип игры: ", game_type)
 		print("Победитель: Игрок ", winner_id)
+		print("Текущий счет до обновления: Игрок 1 =", player_wins[1], ", Игрок 2 =", player_wins[2])
+		print("=")
 		
 		# Проверяем, чтобы winner_id был валидным (1 или 2)
 		if winner_id not in [1, 2]:
@@ -468,6 +503,12 @@ func report_game_result(game_type: String, winner_id: int):
 		
 		# Синхронизируем с клиентами
 		sync_scores_to_clients.rpc(player_wins[1], player_wins[2])
+		
+		# Проверяем общую победу
+		if check_total_victory():
+			print("Игра завершена после обновления счета Memory!")
+	else:
+		print("КЛИЕНТ вызвал report_game_result - это неправильно!")
 			
 @rpc("authority", "call_local", "reliable")
 func start_minigame_on_client(minigame_type: String):
@@ -574,7 +615,224 @@ func update_scoreboard_display():
 		player2_label.text = "Игрок 2: %d" % player_wins.get(2, 0)
 	
 	print("Табло обновлено: Игрок 1=%d, Игрок 2=%d" % [player_wins.get(1, 0), player_wins.get(2, 0)])
+func check_total_victory():
+	# Проверяем, достиг ли какой-либо игрок порога побед
+	if game_finished:
+		return
+	
+	print("Проверка общей победы...")
+	print("Счет игрока 1:", player_wins[1])
+	print("Счет игрока 2:", player_wins[2])
+	
+	# Проверяем достижение порога
+	if player_wins[1] >= total_victory_threshold or player_wins[2] >= total_victory_threshold:
+		# Определяем победителя
+		var winner_id = 0
+		if player_wins[1] > player_wins[2]:
+			winner_id = 1
+		elif player_wins[2] > player_wins[1]:
+			winner_id = 2
+		else:
+			# Если равное количество побед
+			winner_id = 0  # Ничья
+		
+		print("ИГРА ЗАВЕРШЕНА! Победитель: Игрок", winner_id)
+		
+		# Отображаем экран победы
+		show_victory_screen(winner_id)
+		game_finished = true
+		
+		# Останавливаем игру
+		stop_all_game_processes()
+		
+		return true
+	
+	return false
 
+func show_victory_screen(winner_id: int):
+	print("Отображение экрана победы для игрока", winner_id)
+	
+	# Создаем сцену победы если её нет в узле UI
+	if victory_screen == null:
+		# Создаем сцену динамически
+		create_victory_screen_scene(winner_id)
+	else:
+		# Настраиваем существующую сцену
+		setup_victory_screen(winner_id)
+	
+	# Показываем экран победы
+	if victory_screen:
+		victory_screen.visible = true
+		print("Экран победы отображен")
+	
+	# Скрываем основную игру
+	visible = false
+	if players_container:
+		players_container.visible = false
+	
+	# Скрываем табло
+	hide_scoreboard()
+	
+	# Отключаем обработку ввода для игры
+	set_process_input(false)
+	set_process(false)
+	set_physics_process(false)
+	
+	# Отключаем игроков
+	if players_container:
+		for player in players_container.get_children():
+			player.set_process(false)
+			player.set_physics_process(false)
+
+func create_victory_screen_scene(winner_id: int):
+	print("Создание экрана победы...")
+	
+	# Создаем контейнер для экрана победы
+	victory_screen = Control.new()
+	victory_screen.name = "VictoryScreen"
+	victory_screen.size = Vector2(1920, 1080)  # Полный экран
+	victory_screen.anchor_right = 1.0
+	victory_screen.anchor_bottom = 1.0
+	
+	# Добавляем фон
+	var background = ColorRect.new()
+	background.color = Color(0, 0, 0, 0.8)
+	background.size = Vector2(1920, 1080)
+	background.anchor_right = 1.0
+	background.anchor_bottom = 1.0
+	victory_screen.add_child(background)
+	
+	# Создаем основной контейнер
+	var container = VBoxContainer.new()
+	container.size = Vector2(800, 600)
+	container.position = Vector2(560, 240)
+	container.alignment = BoxContainer.ALIGNMENT_CENTER
+	victory_screen.add_child(container)
+	
+	# Заголовок
+	var title = Label.new()
+	title.text = "ИГРА ЗАВЕРШЕНА!"
+	title.add_theme_font_size_override("font_size", 72)
+	title.add_theme_color_override("font_color", Color.GOLD)
+	container.add_child(title)
+	
+	# Определяем текст победителя
+	var winner_text = ""
+	if winner_id == 1:
+		winner_text = "🏆 ПОБЕДИЛ ИГРОК 1! 🏆"
+	elif winner_id == 2:
+		winner_text = "🏆 ПОБЕДИЛ ИГРОК 2! 🏆"
+	else:
+		winner_text = "НИЧЬЯ! ✨"
+	
+	# Текст победителя
+	var winner_label = Label.new()
+	winner_label.text = winner_text
+	winner_label.add_theme_font_size_override("font_size", 64)
+	winner_label.add_theme_color_override("font_color", Color(1, 0.8, 0.2) if winner_id > 0 else Color.WHITE)
+	container.add_child(winner_label)
+	
+	# Добавляем отступ
+	var spacer1 = Control.new()
+	spacer1.custom_minimum_size = Vector2(0, 50)
+	container.add_child(spacer1)
+	
+	# Статистика побед
+	var stats_label = Label.new()
+	stats_label.text = "Финальный счет:\nИгрок 1: %d побед\nИгрок 2: %d побед" % [player_wins[1], player_wins[2]]
+	stats_label.add_theme_font_size_override("font_size", 48)
+	stats_label.add_theme_color_override("font_color", Color.LIGHT_BLUE)
+	container.add_child(stats_label)
+	
+	# Еще отступ
+	var spacer2 = Control.new()
+	spacer2.custom_minimum_size = Vector2(0, 50)
+	container.add_child(spacer2)
+	
+	# Кнопка возврата в меню
+	var menu_button = Button.new()
+	menu_button.text = "ВЕРНУТЬСЯ В МЕНЮ"
+	menu_button.custom_minimum_size = Vector2(400, 80)
+	menu_button.add_theme_font_size_override("font_size", 36)
+	menu_button.pressed.connect(_on_return_to_menu_pressed)
+	container.add_child(menu_button)
+	
+	# Кнопка выхода
+	var exit_button = Button.new()
+	exit_button.text = "ВЫЙТИ ИЗ ИГРЫ"
+	exit_button.custom_minimum_size = Vector2(400, 80)
+	exit_button.add_theme_font_size_override("font_size", 36)
+	exit_button.pressed.connect(_on_exit_game_pressed)
+	container.add_child(exit_button)
+	
+	# Добавляем экран победы в UI
+	var ui_node = get_node_or_null("UI")
+	if ui_node:
+		ui_node.add_child(victory_screen)
+		print("Экран победы добавлен в UI")
+	else:
+		add_child(victory_screen)
+		print("Экран победы добавлен в корень")
+	
+	victory_screen.visible = false
+
+func setup_victory_screen(winner_id: int):
+	if victory_screen:
+		# Находим элементы и обновляем их
+		var winner_label = victory_screen.get_node_or_null("VBoxContainer/WinnerLabel")
+		if winner_label:
+			if winner_id == 1:
+				winner_label.text = "🏆 ПОБЕДИЛ ИГРОК 1! 🏆"
+			elif winner_id == 2:
+				winner_label.text = "🏆 ПОБЕДИЛ ИГРОК 2! 🏆"
+			else:
+				winner_label.text = "НИЧЬЯ! ✨"
+		
+		var stats_label = victory_screen.get_node_or_null("VBoxContainer/StatsLabel")
+		if stats_label:
+			stats_label.text = "Финальный счет:\nИгрок 1: %d побед\nИгрок 2: %d побед" % [player_wins[1], player_wins[2]]
+
+func stop_all_game_processes():
+	print("Остановка всех игровых процессов...")
+	
+	# Останавливаем обработку
+	set_process(false)
+	set_physics_process(false)
+	set_process_input(false)
+	
+	# Останавливаем игроков
+	if players_container:
+		for player in players_container.get_children():
+			player.set_process(false)
+			player.set_physics_process(false)
+	
+	# Останавливаем мини-игру если активна
+	if minigame_active and current_minigame:
+		print("Останавливаю активную мини-игру")
+		current_minigame.queue_free()
+		current_minigame = null
+		minigame_active = false
+	
+	# Останавливаем музыку
+	if has_node("BackgroundMusic"):
+		var background_music = get_node("BackgroundMusic")
+		background_music.stop()
+	
+	print("Все процессы остановлены")
+
+func _on_return_to_menu_pressed():
+	print("Возврат в меню...")
+	
+	# Отключаем мультиплеер
+	if multiplayer.has_multiplayer_peer():
+		multiplayer.multiplayer_peer = null
+	
+	# Загружаем сцену меню
+	get_tree().change_scene_to_file("res://Scenes/MainMenu/MainMenu.tscn")
+
+func _on_exit_game_pressed():
+	print("Выход из игры...")
+	get_tree().quit()
 func hide_scoreboard():
 	# Скрываем весь UI
 	var ui = get_node_or_null("UI")
@@ -601,14 +859,46 @@ func sync_scores_to_clients(wins1: int, wins2: int):
 		player_wins[2] = wins2
 		update_scoreboard_display()
 		print("Клиент получил обновленные счета: ", wins1, ", ", wins2)
-
-func update_scoreboard(winner_id: int):
-	if winner_id in player_wins:
-		player_wins[winner_id] += 1
-		print("Обновление счета: Игрок %d теперь имеет %d побед" % [winner_id, player_wins[winner_id]])
+		
+		# Проверяем общую победу на клиенте
+		check_total_victory()
+@rpc("authority", "call_local", "reliable")
+func sync_final_victory(winner_id: int, final_wins1: int, final_wins2: int):
+	print("Клиент: получена синхронизация финальной победы")
+	
+	# Обновляем счет
+	player_wins[1] = final_wins1
+	player_wins[2] = final_wins2
 	
 	# Обновляем отображение
 	update_scoreboard_display()
+	
+	# Показываем экран победы
+	show_victory_screen(winner_id)
+	game_finished = true
+	
+	# Останавливаем игру
+	stop_all_game_processes()
+func update_scoreboard(winner_id: int):
+	print("=")
+	print("Game.gd: update_scoreboard() вызвана")
+	print("Победитель: Игрок", winner_id)
+	print("Текущий счет до обновления: Игрок 1 =", player_wins.get(1, 0), ", Игрок 2 =", player_wins.get(2, 0))
+	
+	if winner_id in player_wins:
+		player_wins[winner_id] += 1
+		print("Обновление счета: Игрок %d теперь имеет %d побед" % [winner_id, player_wins[winner_id]])
+	else:
+		print("ОШИБКА: winner_id", winner_id, "не найден в player_wins!")
+		return
+	
+	# Обновляем отображение
+	update_scoreboard_display()
+	
+	# Проверяем общую победу
+	if check_total_victory():
+		print("Игра завершена! Победитель определен.")
+		return
 	
 	# Синхронизируем со всеми клиентами (только сервер делает это)
 	if multiplayer.is_server():
@@ -623,6 +913,9 @@ func _input(event):
 	if event.is_action_pressed("ui_cancel") and minigame_active:
 		print("Аварийный выход из мини-игры")
 		
+		if InputManager.is_settings_active():
+			return  # Если открыты настройки, не обрабатываем
+			
 		if multiplayer.is_server():
 			end_minigame_on_client.rpc()
 		

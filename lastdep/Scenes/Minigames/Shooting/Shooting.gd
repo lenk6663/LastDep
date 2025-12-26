@@ -4,7 +4,7 @@ extends Node2D
 signal game_over
 
 # ============== КОНСТАНТЫ И НАСТРОЙКИ ==============
-const GAME_DURATION = 120.0
+const GAME_DURATION = 20.0
 const FIRE_COOLDOWN = 1.0
 const DART_SPEED = 500.0
 
@@ -307,6 +307,9 @@ func create_target_at_position(pos_data: Dictionary, index: int):
 
 # ============== СТРЕЛЬБА И ДРОТИКИ ==============
 func _input(event):
+	if InputManager.is_settings_active():
+		return
+	
 	# ИГНОРИРУЕМ события мыши и джойстика
 	if event is InputEventMouse or event is InputEventJoypadMotion or event is InputEventJoypadButton:
 		return
@@ -671,24 +674,26 @@ func get_winner_id() -> int:
 	# Определяем победителя
 	if player_scores[0] > player_scores[1]:
 		return 1
-	elif player_scores[1] > player_scores[0]:
+	else: 
 		return 2
-	else:
-		return 0  # Ничья
+
 
 func end_game():
+	if not game_active:  # Уже завершена
+		return
+	
 	print("ИГРА ЗАВЕРШЕНА!")
 	game_active = false
 	
 	# Останавливаем таймер
 	$GameTimer.stop()
 	
-	# Определяем победителя
+	# Определяем победителя - ТОЧНО КАК В BATTLESHIP
 	var winner_id = get_winner_id()
 	
 	print("Результат: Победил игрок", winner_id)
 	
-	# Сохраняем результат в метаданные для передачи
+	# Сохраняем победителя в метаданные - ТОЧНО КАК В BATTLESHIP
 	set_meta("winner_id", winner_id)
 	
 	# Показываем победителя
