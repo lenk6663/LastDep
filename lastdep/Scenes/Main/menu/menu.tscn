@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://bcnk6qpn8xpf8"]
+[gd_scene load_steps=3 format=3 uid="uid://bcnk6qpn8xpf8"]
 
 [ext_resource type="Script" uid="uid://c3jqc036pu7fb" path="res://Scenes/Main/menu/menu.gd" id="1_lti8b"]
+[ext_resource type="PackedScene" uid="uid://cg6qfv76ursya" path="res://Scenes/Main/Background/background.tscn" id="2_ax2us"]
 
 [node name="Menu" type="Control"]
 layout_mode = 3
@@ -11,7 +12,12 @@ anchor_right = 0.5
 anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 script = ExtResource("1_lti8b")
+
+[node name="Background" parent="." instance=ExtResource("2_ax2us")]
+layer = -1
 
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 1
@@ -45,15 +51,16 @@ alignment = 1
 
 [node name="TitleLabel" type="Label" parent="Panel/VBoxContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
-text = "Game"
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 52
+text = "LastDep"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="CreateButton" type="Button" parent="Panel/VBoxContainer"]
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 30
 text = "СОЗДАТЬ ИГРУ"
 
 [node name="IPPanel" type="PanelContainer" parent="Panel/VBoxContainer"]
@@ -76,6 +83,7 @@ placeholder_text = "Введите IP хоста"
 [node name="ConnectButton" type="Button" parent="Panel/VBoxContainer/ConnectContainer"]
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
+theme_override_font_sizes/font_size = 25
 text = "ПОДКЛЮЧИТЬСЯ"
 
 [node name="MyIPContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
@@ -90,12 +98,15 @@ editable = false
 [node name="CopyMyIPButton" type="Button" parent="Panel/VBoxContainer/MyIPContainer"]
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
+theme_override_font_sizes/font_size = 25
 text = "КОПИРОВАТЬ"
 
 [node name="SettingsButton" type="Button" parent="Panel/VBoxContainer"]
 layout_mode = 2
-text = "Настройки"
+theme_override_font_sizes/font_size = 30
+text = "НАСТРОЙКИ"
 
 [node name="ExitButton" type="Button" parent="Panel/VBoxContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 30
 text = "ВЫХОД"

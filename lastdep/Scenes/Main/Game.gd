@@ -48,7 +48,7 @@ func _ready():
 		
 		var host_spawn_pos = NetworkingManager.get_spawn_position(1)
 		create_player(1, host_spawn_pos)
-		
+	
 	add_minigame_triggers()
 	
 func init_scoreboard():
@@ -60,9 +60,6 @@ func sync_scores(wins1: int, wins2: int):
 	player_wins[1] = wins1
 	player_wins[2] = wins2
 	update_scoreboard_display()
-
-func _exit_tree():
-	print("=== ИГРА ЗАВЕРШЕНА ===")
 
 # ============== УПРАВЛЕНИЕ ИГРОКАМИ ==============
 func create_player(peer_id: int, position: Vector2):
@@ -92,10 +89,12 @@ func remove_player(peer_id: int):
 func add_minigame_triggers():
 	# Создаем NPC для Memory игры
 	create_npc("memory", Vector2(-100, -50))
+<<<<<<< HEAD
 	
+=======
+>>>>>>> 0ae62dc5b14914a1aef1274c5a88cbaa49341a9a
 	# Создаем NPC для Shooting игры
 	create_npc("shooting", Vector2(105, -35))
-	
 	# Создаем NPC для Battleship игры
 	create_npc("battleship", Vector2(250, -50))
 
@@ -121,6 +120,12 @@ func start_memory_minigame():
 	print("Мой ID: ", multiplayer.get_unique_id())
 	print("=")
 	
+	# Меняем музыку на трек 2 для Memory
+	if background_music:
+		background_music.play_game_2()
+		print("Включена музыка для Memory (трек 2)")
+	
+	# И сервер, и клиент ДОЛЖНЫ создавать свою копию игры
 	# Скрываем основную игру
 	visible = false
 	if players_container:
@@ -163,6 +168,11 @@ func start_shooting_minigame():
 	print("Сервер? ", multiplayer.is_server())
 	print("Мой ID: ", multiplayer.get_unique_id())
 	print("=")
+	
+	# Меняем музыку на трек 3 для Shooting
+	if background_music:
+		background_music.play_game_3()
+		print("Включена музыка для Shooting (трек 3)")
 	
 	# Скрываем основную игру
 	visible = false
@@ -217,6 +227,11 @@ func start_battleship_minigame():
 	print("Мой ID: ", multiplayer.get_unique_id())
 	print("=")
 	
+	# Меняем музыку на трек 1 для Battleship
+	if background_music:
+		background_music.play_game_1()
+		print("Включена музыка для Battleship (трек 1)")
+	
 	# Скрываем основную игру
 	visible = false
 	if players_container:
@@ -253,13 +268,17 @@ func start_battleship_minigame():
 	minigame_active = true
 	print("Мини-игра Battleship добавлена (peer: ", multiplayer.get_unique_id(), ")")
 
-# ============== ФУНКЦИИ ВОЗВРАТА ИЗ МИНИ-ИГР ==============
+# ============== ФУНКЦИИ ЗАВЕРШЕНИЯ МИНИ-ИГР ==============
 func _on_memory_game_over():
 	print("=")
 	print("GAME.GD: _on_memory_game_over ВЫЗВАНА")
 	print("Время: ", Time.get_time_string_from_system())
 	print("=")
-	
+	# Возвращаем музыку к треку 0 (основная игровая)
+	if background_music:
+		background_music.play_game_0()
+		print("Возвращена основная игровая музыка (трек 0)")
+
 	if multiplayer.is_server():
 		# Сервер определяет победителя сам
 		var winner_id = determine_winner_from_memory()
@@ -298,7 +317,7 @@ func _on_shooting_game_over():
 	
 	# Все равно очищаем игру
 	if current_minigame and is_instance_valid(current_minigame):
-		print("Удаляю мини-игру Shooting...")
+		print("Удаляю мини-игру...")
 		current_minigame.queue_free()
 		current_minigame = null
 	
@@ -309,7 +328,10 @@ func _on_battleship_game_over():
 	print("GAME.GD: _on_battleship_game_over ВЫЗВАНА")
 	print("Время: ", Time.get_time_string_from_system())
 	print("=")
-	
+	# Возвращаем музыку к треку 0 (основная игровая)
+	if background_music:
+		background_music.play_game_0()
+		print("Возвращена основная игровая музыка (трек 0)")
 	# Только клиент отправляет результат на сервер
 	if not multiplayer.is_server():
 		var winner_id = determine_winner_from_battleship()
@@ -317,9 +339,27 @@ func _on_battleship_game_over():
 			# Клиент отправляет результат серверу
 			report_game_result.rpc_id(1, "battleship", winner_id)
 	
-	# Все равно очищаем игру
+
 	if current_minigame and is_instance_valid(current_minigame):
-		print("Удаляю мини-игру Battleship...")
+		print("Удаляю мини-игру 'Поиск фейверков'...")
+		current_minigame.queue_free()
+		current_minigame = null
+	
+	restore_main_game()
+
+func _on_shooting_game_over():
+	print("=")
+	print("GAME.GD: _on_shooting_game_over ВЫЗВАНА")
+	print("Время: ", Time.get_time_string_from_system())
+	print("=")
+	
+	# Возвращаем музыку к треку 0 (основная игровая)
+	if background_music:
+		background_music.play_game_0()
+		print("Возвращена основная игровая музыка (трек 0)")
+	
+	if current_minigame and is_instance_valid(current_minigame):
+		print("Удаляю мини-игру...")
 		current_minigame.queue_free()
 		current_minigame = null
 	
@@ -407,6 +447,10 @@ func restore_main_game():
 	minigame_active = false
 	print("Основная игра восстановлена")
 
+func return_to_game():
+	print("Аварийный возврат в игру")
+	restore_main_game()
+
 # ============== RPC СИНХРОНИЗАЦИЯ ==============
 @rpc("any_peer", "call_local", "reliable")
 func report_game_result(game_type: String, winner_id: int):
@@ -452,17 +496,6 @@ func end_minigame_on_client():
 	print("КЛИЕНТ: получаю команду завершить мини-игру")
 	restore_main_game()
 
-# ============== ОБРАБОТКА ВВОДА ==============
-func _input(event):
-	if event.is_action_pressed("ui_cancel") and minigame_active:
-		print("Аварийный выход из мини-игры")
-		
-		if multiplayer.is_server():
-			end_minigame_on_client.rpc()
-		
-		restore_main_game()
-
-# ============== ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ==============
 @rpc("authority", "call_remote", "reliable")
 func sync_memory_game_state(is_active: bool, current_player: int, game_data: Array):
 	if not multiplayer.is_server():
@@ -487,6 +520,26 @@ func sync_memory_game_state(is_active: bool, current_player: int, game_data: Arr
 			current_minigame.update_game_state(is_active, current_player, game_data)
 
 @rpc("authority", "call_remote", "reliable")
+func end_minigame():
+	minigame_active = false
+	
+	# Принудительный возврат музыки
+	if background_music:
+		background_music.play_game_0()
+		
+	if current_minigame:
+		current_minigame.queue_free()
+		current_minigame = null
+	
+	if players_container:
+		players_container.visible = true
+	
+	if players_container:
+		for player in players_container.get_children():
+			player.set_process(true)
+			player.set_physics_process(true)
+
+@rpc("authority", "call_remote", "reliable")
 func sync_minigame_start(minigame_type: String, players: Array):
 	print("СИНХРОНИЗАЦИЯ ЗАПУСКА: ", minigame_type, " для игроков: ", players)
 	
@@ -498,6 +551,7 @@ func sync_minigame_start(minigame_type: String, players: Array):
 		"shooting":
 			start_shooting_minigame()
 
+# ============== ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ==============
 func queue_minigame_start(minigame_type: String, players: Array):
 	if multiplayer.is_server():
 		print("СЕРВЕР: Ставлю в очередь мини-игру ", minigame_type)
@@ -567,3 +621,21 @@ func update_scoreboard(winner_id: int):
 
 func get_player_wins() -> Dictionary:
 	return player_wins.duplicate()
+
+# ============== ОБРАБОТКА ВВОДА ==============
+func _input(event):
+	if event.is_action_pressed("ui_cancel") and minigame_active:
+		print("Аварийный выход из мини-игры")
+		
+		if multiplayer.is_server():
+			end_minigame_on_client.rpc()
+		
+		restore_main_game()
+
+# ============== ЗАВЕРШЕНИЕ ИГРЫ ==============
+func _exit_tree():
+	print("=== ИГРА ЗАВЕРШЕНА ===")
+	# При выходе из игры возвращаемся к музыке меню
+	if background_music:
+		background_music.back_to_menu()
+		print("Возврат к музыке меню")
